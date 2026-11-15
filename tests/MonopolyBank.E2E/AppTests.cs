@@ -169,6 +169,26 @@ public class AppTests : PageTest
     }
 
     [Test]
+    public async Task MoneyPad_FastTaps_RegisterEveryDigit_WithoutDoubleTapZoom()
+    {
+        await OpenApp(Page, "new/shared");
+        var names = Page.GetByTestId("player-name");
+        await names.Nth(0).FillAsync("Anna");
+        await names.Nth(1).FillAsync("Ben");
+        await Page.GetByTestId("start-game").ClickAsync();
+        await Page.Locator("[data-player=Anna] [data-testid=pay]").ClickAsync();
+
+        // iOS zooms on a quick double tap unless touch-action excludes it; html sets it for the whole app.
+        Assert.That(await Page.EvaluateAsync<string>("getComputedStyle(document.documentElement).touchAction"), Is.EqualTo("manipulation"));
+        Assert.That(await Page.GetByTestId("key-1").EvaluateAsync<string>("e => getComputedStyle(e.closest('.moneypad')).touchAction"), Is.EqualTo("manipulation"));
+
+        var one = Page.GetByTestId("key-1");
+        for (var i = 0; i < 4; i++) await one.TapAsync();
+        await Expect(Page.GetByTestId("pad-amount")).ToContainTextAsync("1,111");
+        Assert.That(await Page.EvaluateAsync<double>("visualViewport.scale"), Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task EmptyNames_GetLocalizedDefaults()
     {
         await OpenApp(Page);

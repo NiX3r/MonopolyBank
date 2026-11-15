@@ -60,7 +60,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* manipulation = pan + pinch-zoom only: no double-tap zoom when tapping keys quickly (iOS). Effective touch-action is
+   the intersection with ancestors, so setting it on html covers every element. */
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 
 body {
   margin: 0;
@@ -189,6 +191,7 @@ h1:focus, .sheet:focus { outline: none; } /* FocusOnNavigate moves focus to h1 f
   text-decoration: none;
   cursor: pointer;
   transition: transform .06s ease, box-shadow .06s ease, background .15s;
+  -webkit-user-select: none;
   user-select: none;
 }
 .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--ink); }
@@ -525,7 +528,7 @@ input:focus { outline: 3px solid var(--focus); outline-offset: 1px; }
 .party-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 
 /* ---- Money pad ---- */
-.moneypad { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; outline: none; }
+.moneypad { container-type: inline-size; display: flex; flex-direction: column; gap: 12px; outline: none; touch-action: manipulation; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .pad-display {
   display: flex;
   flex-direction: column;
