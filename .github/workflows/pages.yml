@@ -37,10 +37,14 @@ jobs:
       - name: Point the app at the Pages URL
         env:
           BASE_PATH: ${{ steps.pages.outputs.base_path }}  # "/<repo>" or "" for a custom domain
+          BASE_URL: ${{ steps.pages.outputs.base_url }}    # e.g. https://monopoly.iliev.cz
           PING_URL: ${{ vars.PING_URL }}
         run: |
           sed -i "s|<base href=\"/\" />|<base href=\"${BASE_PATH}/\" />|" src/MonopolyBank/wwwroot/index.html
           grep -q "<base href=\"${BASE_PATH}/\" />" src/MonopolyBank/wwwroot/index.html
+          # Link previews (og:url, og:image) need absolute URLs.
+          sed -i "s|https://monopoly.iliev.cz/|${BASE_URL}/|g" src/MonopolyBank/wwwroot/index.html
+          grep -q "content=\"${BASE_URL}/og-image.png\"" src/MonopolyBank/wwwroot/index.html
           jq -n --arg url "$PING_URL" '{Ping: {Url: $url}}' > src/MonopolyBank/wwwroot/appsettings.json
 
       - name: Publish

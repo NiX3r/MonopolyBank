@@ -11,7 +11,8 @@ self.addEventListener('message', event => { if (event.data === 'skipWaiting') se
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [/\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff2?$/, /\.png$/, /\.svg$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/];
-const offlineAssetsExclude = [/^service-worker\.js$/];
+// og-image.png is only for link previews; no need to store it on every phone.
+const offlineAssetsExclude = [/^service-worker\.js$/, /^og-image\.png$/];
 
 // The worker sits next to index.html, so its folder is the app root (works at "/" and in sub-folders like GitHub Pages).
 const baseUrl = new URL('./', self.location);
