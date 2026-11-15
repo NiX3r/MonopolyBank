@@ -1,0 +1,21 @@
+@* "You" section for wallet mode: own name, token and color. *@
+<section class="card form-card">
+    <h2 class="card-title">@L["setup.you"]</h2>
+    <label class="field">
+        <span>@L["setup.yourName"]</span>
+        <input maxlength="@Limits.MaxNameLength" value="@Name" @oninput="e => NameChanged.InvokeAsync(e.Value?.ToString())"
+               placeholder="@Placeholder" data-testid="your-name" autocomplete="nickname" />
+    </label>
+    <TokenPicker Token="@Token" TokenChanged="TokenChanged" Color="@Color" ColorChanged="ColorChanged" />
+</section>
+
+@code {
+    [Parameter] public string Name { get; set; } = "";
+    /// <summary>Default name used when the field is left empty.</summary>
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public EventCallback<string> NameChanged { get; set; }
+    [Parameter] public string Token { get; set; } = "";
+    [Parameter] public EventCallback<string> TokenChanged { get; set; }
+    [Parameter] public string Color { get; set; } = "";
+    [Parameter] public EventCallback<string> ColorChanged { get; set; }
+}

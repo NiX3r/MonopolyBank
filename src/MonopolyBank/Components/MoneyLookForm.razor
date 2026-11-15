@@ -1,0 +1,46 @@
+@* How money looks: currency symbol and its position. *@
+<div class="field">
+    <span>@L["setup.currency"]</span>
+    <div class="chip-row">
+        @foreach (var c in Currencies)
+        {
+            <button type="button" class="chip @(c == Settings.Currency ? "selected" : "")" @onclick="() => SetCurrency(c)">@c</button>
+        }
+        <input class="chip-input" maxlength="@Limits.MaxCurrencyLength" value="@Settings.Currency"
+               @oninput="e => SetCurrency(e.Value?.ToString())" aria-label="@L["setup.currency"]" data-testid="currency" />
+    </div>
+</div>
+
+<div class="field">
+    <span>@L["setup.symbolPosition"]</span>
+    <div class="chip-row" role="radiogroup">
+        <button type="button" class="chip @(!Settings.CurrencyAfter ? "selected" : "")" role="radio" aria-checked="@(!Settings.CurrencyAfter)"
+                @onclick="() => SetAfter(false)" data-testid="symbol-before">@L["setup.symbolBefore"] · <Money Amount="100" Settings="Preview(false)" /></button>
+        <button type="button" class="chip @(Settings.CurrencyAfter ? "selected" : "")" role="radio" aria-checked="@Settings.CurrencyAfter"
+                @onclick="() => SetAfter(true)" data-testid="symbol-after">@L["setup.symbolAfter"] · <Money Amount="100" Settings="Preview(true)" /></button>
+    </div>
+</div>
+
+@code {
+    private static readonly string[] Currencies = ["M", "$", "€", "£", "Kč"];
+
+    [Parameter, EditorRequired] public GameSettings Settings { get; set; } = default!;
+    [Parameter] public EventCallback Changed { get; set; }
+
+    private GameSettings Preview(bool after) => new() { Currency = Settings.Currency, CurrencyAfter = after };
+
+    private Task SetCurrency(string? c)
+    {
+        Settings.Currency = (c ?? "").Trim() is var v && v.Length <= Limits.MaxCurrencyLength ? v : Settings.Currency;
+        // Typical positions: "1 500 Kč", "1.500 €" (de/es/cs), "M1,500", "$1,500", "£1,500".
+        if (c is "Kč" or "€") Settings.CurrencyAfter = true;
+        else if (c is "M" or "$" or "£") Settings.CurrencyAfter = false;
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetAfter(bool after)
+    {
+        Settings.CurrencyAfter = after;
+        return Changed.InvokeAsync();
+    }
+}

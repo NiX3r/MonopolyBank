@@ -1,0 +1,101 @@
+@inject EditionStore EditionsStore
+@* Game edition picker + rules editor, shared by both setup pages. Everything can be adjusted before the game starts. *@
+<section class="card form-card">
+    <h2 class="card-title">@L["edition.title"]</h2>
+    <p class="muted small">@L["edition.hint"]</p>
+    <div class="edition-list" role="radiogroup" aria-label="@L["edition.title"]">
+        @foreach (var e in EditionsStore.All)
+        {
+            var selected = e.Matches(Settings);
+            <div class="edition @(selected ? "selected" : "")" @key="e.Id">
+                <button type="button" class="edition-pick" role="radio" aria-checked="@selected" @onclick="() => Apply(e)" data-testid="edition-@e.Id">
+                    <span class="edition-cur @(e.Currency == "M" ? "cur-m" : "")">@e.Currency</span>
+                    <span class="edition-text">
+                        <strong>@L.EditionName(e)</strong>
+                        <small><Money Amount="e.StartMoney" Settings="Look(e)" /> · @L["bank.go"] <Money Amount="e.GoSalary" Settings="Look(e)" /></small>
+                    </span>
+                </button>
+                @if (e.IsCustom)
+                {
+                    <button type="button" class="icon-btn" @onclick="() => Delete(e)" aria-label="@L["edition.delete"] @e.Name"><Icon Name="trash" /></button>
+                }
+            </div>
+        }
+        @if (!EditionsStore.All.Any(e => e.Matches(Settings)))
+        {
+            <div class="edition selected"><span class="edition-pick static"><span class="edition-cur">✎</span><span class="edition-text"><strong>@L["edition.custom"]</strong></span></span></div>
+        }
+    </div>
+</section>
+
+<section class="card form-card">
+    <h2 class="card-title">@L["setup.rules"]</h2>
+    <div class="field-row">
+        <label class="field">
+            <span>@L["setup.startMoney"]</span>
+            <input type="number" inputmode="numeric" min="0" max="@Limits.MaxStartMoney" @bind="Settings.StartMoney" @bind:event="oninput" data-testid="start-money" />
+        </label>
+        <label class="field">
+            <span>@L["setup.goSalary"]</span>
+            <input type="number" inputmode="numeric" min="0" max="@Limits.MaxGoSalary" @bind="Settings.GoSalary" @bind:event="oninput" data-testid="go-salary" />
+        </label>
+    </div>
+    <MoneyLookForm Settings="Settings" Changed="StateHasChanged" />
+    @if (ShowPot)
+    {
+        <label class="toggle">
+            <input type="checkbox" @bind="Settings.FreeParkingPot" data-testid="pot-toggle" />
+            <span class="toggle-ui" aria-hidden="true"></span>
+            <span><strong>@L["setup.pot"]</strong><small>@L["setup.potHint"]</small></span>
+        </label>
+    }
+    @if (_saving)
+    {
+        <div class="field">
+            <span>@L["edition.saveName"]</span>
+            <div class="inline-add">
+                <input maxlength="@Limits.MaxEditionNameLength" @bind="_name" @bind:event="oninput" placeholder="@L["edition.namePlaceholder"]"
+                       @onkeydown="OnEnter" data-testid="edition-name" />
+                <button type="button" class="btn btn-secondary" @onclick="Save" data-testid="save-edition">@L["edition.save"]</button>
+            </div>
+        </div>
+    }
+    else if (!EditionsStore.All.Any(e => e.Matches(Settings)))
+    {
+        <button type="button" class="btn btn-ghost btn-block" @onclick="() => _saving = true" data-testid="save-edition-open"><Icon Name="plus" />@L["edition.saveAs"]</button>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public GameSettings Settings { get; set; } = default!;
+    [Parameter] public bool ShowPot { get; set; }
+
+    private bool _saving;
+    private string _name = "";
+
+    private static GameSettings Look(Edition e) => new() { Currency = e.Currency, CurrencyAfter = e.CurrencyAfter };
+
+    private void Apply(Edition e)
+    {
+        e.ApplyTo(Settings);
+        _saving = false;
+    }
+
+    private Task Save() => Try(async () =>
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+        {
+            Toasts.Error(L["edition.nameRequired"]);
+            return;
+        }
+        var e = await EditionsStore.SaveAsync(Settings, _name);
+        e.ApplyTo(Settings);
+        _saving = false;
+        _name = "";
+        Toasts.Show(L["edition.saved", e.Name]);
+    });
+
+    private async Task Delete(Edition e) => await EditionsStore.DeleteAsync(e);
+
+    private Task OnEnter(KeyboardEventArgs e) => e.Key == "Enter" ? Save() : Task.CompletedTask;
+}

@@ -1,0 +1,14 @@
+@inject Browser Browser
+@* Big monospace code with a copy button (fallback when a camera is not available). *@
+<div class="code-box">
+    <code data-testid="@TestId">@Code</code>
+    <button type="button" class="icon-btn" @onclick="Copy" aria-label="@L["common.copy"]"><Icon Name="@(_copied ? "check" : "copy")" /></button>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Code { get; set; } = "";
+    [Parameter] public string? TestId { get; set; }
+    private bool _copied;
+
+    private async Task Copy() => _copied = await Browser.Copy(Code);
+}

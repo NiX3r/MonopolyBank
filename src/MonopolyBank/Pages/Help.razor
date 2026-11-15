@@ -1,0 +1,21 @@
+@page "/help"
+
+<PageTitle>@L["help.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["help.title"]" Back="" />
+
+<main class="page help">
+    @foreach (var section in Sections)
+    {
+        <section class="card help-card help-@section">
+            <h2 class="card-title">@L[$"help.{section}.title"]</h2>
+            @foreach (var line in L[$"help.{section}.body"].Split('\n'))
+            {
+                <p>@line</p>
+            }
+        </section>
+    }
+</main>
+
+@code {
+    private static readonly string[] Sections = ["start", "shared", "wallet", "transfer", "offline", "privacy"];
+}

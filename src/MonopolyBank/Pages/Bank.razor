@@ -1,0 +1,162 @@
+@page "/bank"
+
+<PageTitle>@L["bank.title"] · Monopoly Bank</PageTitle>
+
+@if (Store.Shared is { } game)
+{
+    <TopBar Title="@L["bank.title"]" Back="">
+        <Actions>
+            <a class="icon-btn on-red" href="history" aria-label="@L["history.title"]" data-testid="history-link"><Icon Name="history" /></a>
+            <a class="icon-btn on-red" href="settings" aria-label="@L["settings.title"]"><Icon Name="settings" /></a>
+        </Actions>
+    </TopBar>
+
+    <main class="page bank">
+        @if (game.Settings.FreeParkingPot)
+        {
+            <section class="pot-card" data-testid="pot">
+                <div>
+                    <span class="eyebrow">@L["party.pot"]</span>
+                    <Money Amount="game.Pot" Class="pot-amount" />
+                </div>
+                <button class="btn btn-yellow" disabled="@(game.Pot == 0)" @onclick="() => OpenPay(Party.Pot, null, game.Pot)">@L["bank.collectPot"]</button>
+            </section>
+        }
+
+        <div class="deed-grid">
+            @foreach (var p in game.Players)
+            {
+                <PlayerCard Player="p" @key="p.Id">
+                    <button class="chip chip-go" @onclick="() => PassGo(p)" data-testid="go">
+                        <Icon Name="go" Size="16" />@L["bank.go"] <Money Amount="game.Settings.GoSalary" Signed />
+                    </button>
+                    <button class="chip" @onclick="() => OpenPay(Party.Of(p.Id), null)" data-testid="pay"><Icon Name="send" Size="16" />@L["bank.pay"]</button>
+                    <button class="chip" @onclick="() => OpenPay(Party.Bank, Party.Of(p.Id))" data-testid="receive"><Icon Name="receive" Size="16" />@L["bank.receive"]</button>
+                    <button class="chip chip-icon" @onclick="() => _more = p" aria-label="@L["common.more"]" data-testid="more"><Icon Name="more" Size="16" /></button>
+                </PlayerCard>
+            }
+        </div>
+    </main>
+
+    <Sheet @bind-Open="_payOpen" Title="@L["pay.title"]" Class="pay-sheet">
+        <ChildContent>
+        <div class="party-pick">
+            <span class="party-label">@L["pay.from"]</span>
+            <div class="chip-row" data-testid="from">
+                @foreach (var party in Parties(game))
+                {
+                    <button class="chip @(party == _from ? "selected" : "")" @onclick="() => _from = party">@Label(game, party)</button>
+                }
+            </div>
+        </div>
+        <div class="party-pick">
+            <span class="party-label">@L["pay.to"]</span>
+            <div class="chip-row" data-testid="to">
+                @foreach (var party in Parties(game))
+                {
+                    <button class="chip @(party == _to ? "selected" : "")" disabled="@(party == _from)" @onclick="() => _to = party">@Label(game, party)</button>
+                }
+            </div>
+        </div>
+        <MoneyPad @bind-Value="_amount" Hint="@(_from is { Kind: not PartyKind.Bank } f ? L["pay.available", Money(game.BalanceOf(f))] : null)" />
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-primary btn-lg btn-block" disabled="@(!CanPay)" @onclick="() => ConfirmPay(game)" data-testid="confirm-pay">
+                @if (CanPay)
+                {
+                    @L["pay.confirm", Label(game, _from!), Label(game, _to!)] <Money Amount="_amount" />
+                }
+                else
+                {
+                    @L["pay.choose"]
+                }
+            </button>
+        </Footer>
+    </Sheet>
+
+    <Sheet Open="_more is not null" OpenChanged="_ => CloseMore()" Title="@_more?.Name">
+        <ChildContent>
+        @if (_more is { } p)
+        {
+            <p class="muted">@L["bankrupt.explain", p.Name]</p>
+            <div class="party-pick">
+                <span class="party-label">@L["bankrupt.creditor"]</span>
+                <div class="chip-row">
+                    @foreach (var party in Parties(game).Where(x => x.Kind != PartyKind.Pot && x.PlayerId != p.Id))
+                    {
+                        <button class="chip @(party == _creditor ? "selected" : "")" @onclick="() => _creditor = party">@Label(game, party)</button>
+                    }
+                </div>
+            </div>
+        }
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-danger btn-block" @onclick="() => Bankrupt(game)" data-testid="confirm-bankrupt">
+                <Icon Name="ban" />@L["bankrupt.confirm"]
+            </button>
+        </Footer>
+    </Sheet>
+}
+
+@code {
+    private bool _payOpen;
+    private Party? _from, _to;
+    private long _amount;
+    private Player? _more;
+    private Party _creditor = Party.Bank;
+
+    protected override void OnInitialized()
+    {
+        if (Store.Shared is null) Nav.NavigateTo("", replace: true);
+    }
+
+    private bool CanPay => _from is not null && _to is not null && _from != _to && _amount > 0;
+
+    private static IEnumerable<Party> Parties(SharedGame g)
+    {
+        yield return Party.Bank;
+        if (g.Settings.FreeParkingPot) yield return Party.Pot;
+        foreach (var p in g.ActivePlayers) yield return Party.Of(p.Id);
+    }
+
+    private string Label(SharedGame g, Party p) => p.Kind == PartyKind.Player
+        ? $"{g.GetPlayer(p.PlayerId!.Value).Token} {L.PartyName(g, p)}"
+        : L.PartyName(g, p);
+
+    private void OpenPay(Party? from, Party? to, long amount = 0)
+    {
+        (_from, _to, _amount, _payOpen) = (from, to, amount, true);
+    }
+
+    private void CloseMore() => (_more, _creditor) = (null, Party.Bank);
+
+    private Task PassGo(Player p) => Try(async () =>
+    {
+        var g = Store.Shared!;
+        var tx = await Store.Run(() => g.PassGo(p.Id));
+        Done(g, tx);
+    });
+
+    private Task ConfirmPay(SharedGame g) => Try(async () =>
+    {
+        var tx = await Store.Run(() => g.Pay(_from!, _to!, _amount));
+        _payOpen = false;
+        Done(g, tx);
+    });
+
+    private Task Bankrupt(SharedGame g) => Try(async () =>
+    {
+        var tx = await Store.Run(() => g.DeclareBankrupt(_more!.Id, _creditor));
+        CloseMore();
+        Done(g, tx);
+    });
+
+    /// <summary>Success toast with Undo (only while this is still the latest transaction).</summary>
+    private void Done(SharedGame g, Transaction tx) =>
+        Toasts.Show($"{L.Describe(g, tx)} · {Money(tx.Amount)}", ToastKind.Success, L["common.undo"], async () =>
+        {
+            if (g.History.LastOrDefault()?.Id != tx.Id) throw new BankException(BankError.CannotUndo);
+            await Store.Run(() => g.Undo());
+            Toasts.Show(L["history.undone"]);
+        });
+}

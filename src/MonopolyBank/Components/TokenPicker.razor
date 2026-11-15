@@ -1,0 +1,23 @@
+@* Pick a token (emoji) and a property color for a player. *@
+<div class="token-picker">
+    <div class="token-grid" role="group" aria-label="@L["setup.token"]">
+        @foreach (var t in Texts.Tokens)
+        {
+            <button type="button" class="token-opt @(t == Token ? "selected" : "")" @onclick="() => TokenChanged.InvokeAsync(t)">@t</button>
+        }
+    </div>
+    <div class="color-grid" role="group" aria-label="@L["setup.color"]">
+        @foreach (var c in Texts.Colors)
+        {
+            <button type="button" class="swatch swatch-@c @(c == Color ? "selected" : "")" @onclick="() => ColorChanged.InvokeAsync(c)"
+                    aria-label="@L["color." + c]" title="@L["color." + c]"></button>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Token { get; set; } = "";
+    [Parameter] public EventCallback<string> TokenChanged { get; set; }
+    [Parameter] public string Color { get; set; } = "";
+    [Parameter] public EventCallback<string> ColorChanged { get; set; }
+}

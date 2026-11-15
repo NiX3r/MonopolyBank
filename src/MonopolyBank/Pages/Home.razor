@@ -1,0 +1,57 @@
+@page "/"
+
+<PageTitle>Monopoly Bank</PageTitle>
+
+<TopBar>
+    <Actions>
+        <a class="icon-btn on-red" href="help" aria-label="@L["help.title"]"><Icon Name="help" /></a>
+        <a class="icon-btn on-red" href="settings" aria-label="@L["settings.title"]"><Icon Name="settings" /></a>
+    </Actions>
+</TopBar>
+
+<main class="page home">
+    <p class="tagline">@L["home.tagline"]</p>
+
+    @if (Store.State.HasGame)
+    {
+        <section class="card continue-card">
+            <div>
+                <span class="eyebrow">@L["home.inProgress"]</span>
+                <h2>@GameSummary</h2>
+            </div>
+            <a class="btn btn-primary btn-lg" href="@GameUrl" data-testid="continue">@L["home.continue"] <Icon Name="go" /></a>
+        </section>
+        <h2 class="section-title">@L["home.newGame"]</h2>
+    }
+
+    <div class="mode-grid">
+        <a class="mode-card" href="new/shared" data-testid="mode-shared">
+            <span class="mode-icon chance"><Icon Name="users" Size="30" /></span>
+            <span class="mode-text">
+                <strong>@L["home.shared.title"]</strong>
+                <span>@L["home.shared.desc"]</span>
+            </span>
+        </a>
+        <div class="mode-card mode-wallet">
+            <span class="mode-icon chest"><Icon Name="phone" Size="30" /></span>
+            <span class="mode-text">
+                <strong>@L["home.wallet.title"]</strong>
+                <span>@L["home.wallet.desc"]</span>
+            </span>
+            <span class="mode-actions">
+                <a class="btn btn-secondary" href="new/wallet" data-testid="mode-wallet-host"><Icon Name="plus" />@L["home.wallet.host"]</a>
+                <a class="btn btn-secondary" href="join" data-testid="mode-wallet-join"><Icon Name="join" />@L["home.wallet.join"]</a>
+            </span>
+        </div>
+    </div>
+
+    <LanguageBar />
+</main>
+
+@code {
+    private string GameUrl => Store.State.Mode == GameMode.Wallet ? "wallet" : "bank";
+
+    private string GameSummary => Store.Shared is { } s
+        ? L["home.summary.shared", s.Players.Count]
+        : Store.Wallet is { } w ? L["home.summary.wallet", w.Me.Name] : "";
+}

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MonopolyBank.Core/MonopolyBank.Core.csproj" />
+    <Project Path="src/MonopolyBank/MonopolyBank.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MonopolyBank.E2E/MonopolyBank.E2E.csproj" />
+    <Project Path="tests/MonopolyBank.Tests/MonopolyBank.Tests.csproj" />
+  </Folder>
+</Solution>

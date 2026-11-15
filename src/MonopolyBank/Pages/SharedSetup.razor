@@ -1,0 +1,79 @@
+@page "/new/shared"
+
+<PageTitle>@L["setup.shared.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["setup.shared.title"]" Back="" />
+
+<main class="page setup">
+    @if (Store.State.HasGame)
+    {
+        <p class="notice">@L["setup.replaceWarning"]</p>
+    }
+
+    <RulesForm Settings="_settings" ShowPot />
+
+    <section class="card form-card">
+        <h2 class="card-title">@L["setup.players"] <small>@_players.Count / @Limits.MaxPlayers</small></h2>
+        <ul class="player-rows">
+            @foreach (var p in _players)
+            {
+                <li class="player-row" @key="p">
+                    <button type="button" class="token-btn swatch-@p.Color" @onclick="() => _editing = p"
+                            aria-label="@L["setup.token"]">@p.Token</button>
+                    <input class="grow" placeholder="@L["setup.playerName", _players.IndexOf(p) + 1]" maxlength="@Limits.MaxNameLength"
+                           @bind="p.Name" @bind:event="oninput" data-testid="player-name" />
+                    @if (_players.Count > Limits.MinPlayers)
+                    {
+                        <button type="button" class="icon-btn" @onclick="() => _players.Remove(p)" aria-label="@L["common.remove"]"><Icon Name="trash" /></button>
+                    }
+                </li>
+            }
+        </ul>
+        @if (_players.Count < Limits.MaxPlayers)
+        {
+            <button type="button" class="btn btn-ghost btn-block" @onclick="AddPlayer" data-testid="add-player"><Icon Name="plus" />@L["setup.addPlayer"]</button>
+        }
+    </section>
+
+    <div class="sticky-cta">
+        <button class="btn btn-primary btn-lg btn-block" @onclick="Start" data-testid="start-game">@L["setup.start"] <Icon Name="go" /></button>
+    </div>
+</main>
+
+<Sheet Open="_editing is not null" OpenChanged="_ => _editing = null" Title="@(_editing?.Name is { Length: > 0 } n ? n : L["setup.token"])">
+    <ChildContent>
+    @if (_editing is { } e)
+    {
+        <TokenPicker @bind-Token="e.Token" @bind-Color="e.Color" />
+    }
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-primary btn-block" @onclick="() => _editing = null">@L["common.done"]</button>
+    </Footer>
+</Sheet>
+
+@code {
+    private sealed class Row { public string Name = ""; public string Token = ""; public string Color = ""; }
+
+    private readonly GameSettings _settings = new();
+    private readonly List<Row> _players = [];
+    private Row? _editing;
+
+    protected override void OnInitialized()
+    {
+        AddPlayer();
+        AddPlayer();
+    }
+
+    private void AddPlayer() => _players.Add(new Row
+    {
+        Token = Texts.Tokens.First(t => _players.All(p => p.Token != t)),
+        Color = Texts.Colors.FirstOrDefault(c => _players.All(p => p.Color != c)) ?? Texts.Colors[0],
+    });
+
+    private Task Start() => Try(async () =>
+    {
+        var game = SharedGame.Create(_settings, _players.Select((p, i) => new SharedGame.NewPlayer(string.IsNullOrWhiteSpace(p.Name) ? L["setup.playerName", i + 1] : p.Name, p.Token, p.Color)).ToList());
+        await Store.StartAsync(game);
+        Nav.NavigateTo("bank");
+    });
+}

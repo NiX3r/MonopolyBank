@@ -1,0 +1,50 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@* Live camera QR scanner. Raises OnScan for every decoded QR; the parent decides what to do. *@
+<div class="scanner">
+    @if (_error is null)
+    {
+        <video @ref="_video" muted playsinline></video>
+        <div class="scanner-frame" aria-hidden="true"></div>
+    }
+    else
+    {
+        <div class="scanner-error"><Icon Name="keyboard" Size="28" /><span>@_error</span></div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnScan { get; set; }
+
+    private ElementReference _video;
+    private DotNetObjectReference<QrScanner>? _ref;
+    private string? _error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _ref = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("mb.scanner.start", _video, _ref);
+    }
+
+    [JSInvokable] public Task OnScanned(string text) => OnScan.InvokeAsync(text);
+
+    [JSInvokable]
+    public void OnScanError(string name)
+    {
+        _error = name switch
+        {
+            "NotAllowedError" => L["scan.denied"],
+            "InsecureContext" => L["scan.insecure"],
+            _ => L["scan.unavailable"],
+        };
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("mb.scanner.stop"); } catch (JSDisconnectedException) { }
+        _ref?.Dispose();
+        base.Dispose();
+    }
+}

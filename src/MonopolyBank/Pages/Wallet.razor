@@ -1,0 +1,199 @@
+@page "/wallet"
+
+<PageTitle>@L["wallet.title"] · Monopoly Bank</PageTitle>
+
+@if (Store.Wallet is { } w)
+{
+    <TopBar Title="@L["wallet.title"]" Back="">
+        <Actions>
+            <button class="icon-btn on-red" @onclick="() => _invite = true" aria-label="@L["wallet.invite"]" data-testid="invite"><Icon Name="qr" /></button>
+            <a class="icon-btn on-red" href="history" aria-label="@L["history.title"]" data-testid="history-link"><Icon Name="history" /></a>
+            <a class="icon-btn on-red" href="settings" aria-label="@L["settings.title"]"><Icon Name="settings" /></a>
+        </Actions>
+    </TopBar>
+
+    <main class="page wallet">
+        <PlayerCard Player="w.Me" Big />
+
+        <div class="action-grid">
+            <button class="action action-receive" @onclick="OpenReceive" data-testid="receive">
+                <Icon Name="scan" Size="28" /><strong>@L["wallet.receive"]</strong><small>@L["wallet.receiveHint"]</small>
+            </button>
+            <button class="action action-send" @onclick="OpenSend" data-testid="send">
+                <Icon Name="send" Size="28" /><strong>@L["wallet.send"]</strong><small>@L["wallet.sendHint"]</small>
+            </button>
+            <button class="action action-go wide" @onclick="PassGo" data-testid="go">
+                <span class="go-word">GO</span><strong>@L["wallet.passGo"]</strong><Money Amount="w.Settings.GoSalary" Signed />
+            </button>
+            <button class="action" @onclick="() => OpenBank(true)" data-testid="from-bank">
+                <Icon Name="bank" Size="24" /><strong>@L["wallet.fromBank"]</strong>
+            </button>
+            <button class="action" @onclick="() => OpenBank(false)" data-testid="to-bank">
+                <Icon Name="bank" Size="24" /><strong>@L["wallet.toBank"]</strong>
+            </button>
+        </div>
+
+        @if (w.History.Count > 0)
+        {
+            <section class="card">
+                <h2 class="card-title">@L["history.recent"] <a class="link" href="history">@L["history.all"]</a></h2>
+                <ul class="tx-list">
+                    @foreach (var tx in w.History.AsEnumerable().Reverse().Take(4))
+                    {
+                        <li class="tx @(w.Sign(tx) > 0 ? "in" : "out") @(tx.Cancelled ? "cancelled" : "")">
+                            <span class="tx-text">@L.Describe(w, tx)</span>
+                            <Money Amount="@(w.Sign(tx) * tx.Amount)" Signed Class="tx-amount" />
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    </main>
+
+    @* Bank: collect or pay *@
+    <Sheet @bind-Open="_bankOpen" Title="@(_bankCollect ? L["wallet.fromBank"] : L["wallet.toBank"])">
+        <ChildContent>
+        <MoneyPad @bind-Value="_amount" Hint="@(_bankCollect ? null : L["pay.available", Money(w.Me.Balance)])" />
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-primary btn-lg btn-block" disabled="@(_amount == 0)" @onclick="() => ConfirmBank(w)" data-testid="confirm-bank">
+                @(_bankCollect ? L["wallet.collect"] : L["wallet.pay"]) <Money Amount="_amount" />
+            </button>
+        </Footer>
+    </Sheet>
+
+    @* Send to another player: amount → QR *@
+    <Sheet Open="_sendOpen" OpenChanged="CloseSend" Title="@L["wallet.send"]">
+        <ChildContent>
+        @if (_sent is null)
+        {
+            <MoneyPad @bind-Value="_amount" Hint="@L["pay.available", Money(w.Me.Balance)]" />
+            <label class="field">
+                <span>@L["wallet.toWhom"]</span>
+                <input maxlength="@Limits.MaxNameLength" @bind="_toName" placeholder="@L["common.optional"]" />
+            </label>
+        }
+        else
+        {
+            <TransferQr Wallet="w" Tx="_sent" />
+        }
+        </ChildContent>
+        <Footer>
+            @if (_sent is null)
+            {
+                <button class="btn btn-primary btn-lg btn-block" disabled="@(_amount == 0)" @onclick="() => CreateSend(w)" data-testid="create-transfer">
+                    @L["wallet.createTransfer"] <Money Amount="_amount" />
+                </button>
+            }
+            else
+            {
+                <div class="btn-row">
+                    <button class="btn btn-ghost" @onclick="() => CancelSend(w)" data-testid="cancel-transfer">@L["wallet.cancelTransfer"]</button>
+                    <button class="btn btn-primary grow" @onclick="CloseSend" data-testid="transfer-done"><Icon Name="check" />@L["common.done"]</button>
+                </div>
+            }
+        </Footer>
+    </Sheet>
+
+    @* Receive: scan or type *@
+    <Sheet @bind-Open="_receiveOpen" Title="@L["wallet.receive"]">
+        <ChildContent>
+        @if (_receiveOpen)
+        {
+            <QrScanner OnScan="text => Receive(w, text, fromScan: true)" />
+        }
+        <label class="field">
+            <span>@L["wallet.typeCode"]</span>
+            <CodeInput @bind-Value="_typed" Chars="12" TestId="transfer-code" OnEnter="() => Receive(w, _typed, fromScan: false)" />
+        </label>
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-primary btn-lg btn-block" disabled="@string.IsNullOrWhiteSpace(_typed)" @onclick="() => Receive(w, _typed, fromScan: false)" data-testid="confirm-receive">
+                @L["wallet.accept"]
+            </button>
+        </Footer>
+    </Sheet>
+
+    @* Invite: game QR for other players *@
+    <Sheet @bind-Open="_invite" Title="@L["wallet.invite"]">
+        <ChildContent>
+        <div class="qr-block">
+            <QrImage Text="@QrPayload.JoinUrl(Nav.BaseUri, w.Code, w.Settings)" Alt="@L["wallet.invite"]" />
+            <p class="muted center">@L["wallet.inviteHint"]</p>
+            <CodeBox Code="@w.Code.Encode()" TestId="invite-code" />
+        </div>
+        </ChildContent>
+    </Sheet>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "invite")] public int? InviteOnStart { get; set; }
+
+    private bool _bankOpen, _bankCollect, _sendOpen, _receiveOpen, _invite;
+    private long _amount;
+    private string _toName = "", _typed = "";
+    private Transaction? _sent;
+
+    protected override void OnInitialized()
+    {
+        if (Store.Wallet is null) Nav.NavigateTo("", replace: true);
+        else if (InviteOnStart == 1) _invite = true;
+    }
+
+    private void OpenBank(bool collect) => (_bankOpen, _bankCollect, _amount) = (true, collect, 0);
+    private void OpenSend() => (_sendOpen, _sent, _amount, _toName) = (true, null, 0, "");
+    private void OpenReceive() => (_receiveOpen, _typed) = (true, "");
+    private void CloseSend() => (_sendOpen, _sent) = (false, null);
+
+    private Task PassGo() => Try(async () =>
+    {
+        var w = Store.Wallet!;
+        var tx = await Store.Run(w.PassGo);
+        Done(w, tx);
+    });
+
+    private Task ConfirmBank(WalletGame w) => Try(async () =>
+    {
+        var tx = await Store.Run(() => _bankCollect ? w.CollectFromBank(_amount) : w.PayBank(_amount));
+        _bankOpen = false;
+        Done(w, tx);
+    });
+
+    private Task CreateSend(WalletGame w) => Try(async () =>
+    {
+        var (tx, _) = await Store.Run(() => w.Send(_amount, _toName));
+        _sent = tx;
+    });
+
+    private Task CancelSend(WalletGame w) => Try(async () =>
+    {
+        await Store.Run(() => w.CancelSend(_sent!.Id));
+        CloseSend();
+        Toasts.Show(L["wtx.cancelled"]);
+    });
+
+    private async Task Receive(WalletGame w, string text, bool fromScan)
+    {
+        // A scanned game-invite QR is a common mix-up: explain instead of "invalid code".
+        if (fromScan && QrPayload.TryGetGameCode(text, out _))
+        {
+            Toasts.Error(L["err.NotATransfer"]);
+            return;
+        }
+        var ok = await Try(async () =>
+        {
+            var tx = await Store.Run(() => w.Receive(text));
+            _receiveOpen = false;
+            Toasts.Show($"{L.Describe(w, tx)} · +{Money(tx.Amount)}", ToastKind.Success);
+        });
+        if (!ok && !fromScan) _typed = "";
+    }
+
+    private void Done(WalletGame w, Transaction tx) =>
+        Toasts.Show($"{L.Describe(w, tx)} · {Money(tx.Amount)}", ToastKind.Success, L["common.undo"], async () =>
+        {
+            if (w.History.LastOrDefault()?.Id != tx.Id) throw new BankException(BankError.CannotUndo);
+            await Store.Run(w.Undo);
+            Toasts.Show(L["history.undone"]);
+        });
+}

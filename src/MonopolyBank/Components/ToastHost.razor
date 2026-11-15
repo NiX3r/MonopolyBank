@@ -1,0 +1,29 @@
+<div class="toasts" aria-live="polite">
+    @foreach (var t in Toasts.Items)
+    {
+        <div class="toast toast-@t.Kind.ToString().ToLowerInvariant()" @key="t.Id" data-testid="toast">
+            <span class="toast-text">@t.Text</span>
+            @if (t.Action is not null)
+            {
+                <button class="toast-action" @onclick="() => Act(t)">@t.ActionText</button>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override void OnInitialized() => Toasts.Changed += OnChanged;
+    private void OnChanged() => InvokeAsync(StateHasChanged);
+
+    private async Task Act(Toast t)
+    {
+        Toasts.Dismiss(t);
+        await Try(t.Action!);
+    }
+
+    public override void Dispose()
+    {
+        Toasts.Changed -= OnChanged;
+        base.Dispose();
+    }
+}

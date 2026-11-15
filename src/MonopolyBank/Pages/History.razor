@@ -1,0 +1,102 @@
+@page "/history"
+
+<PageTitle>@L["history.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["history.title"]" Back="@(Store.State.Mode == GameMode.Wallet ? "wallet" : "bank")" />
+
+<main class="page history">
+    @if (Store.Shared is { } g)
+    {
+        @if (g.History.Count == 0)
+        {
+            <EmptyHistory />
+        }
+        else
+        {
+            <ul class="tx-list card" data-testid="history">
+                @for (var i = g.History.Count - 1; i >= 0; i--)
+                {
+                    var tx = g.History[i];
+                    var last = i == g.History.Count - 1;
+                    <li class="tx">
+                        <span class="tx-time">@Time(tx)</span>
+                        <span class="tx-text">@L.Describe(g, tx)</span>
+                        <Money Amount="tx.Amount" Class="tx-amount" />
+                        @if (last)
+                        {
+                            <button class="chip" @onclick="() => Undo(g.Undo)" data-testid="undo"><Icon Name="undo" Size="16" />@L["common.undo"]</button>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    }
+    else if (Store.Wallet is { } w)
+    {
+        @if (w.History.Count == 0)
+        {
+            <EmptyHistory />
+        }
+        else
+        {
+            <ul class="tx-list card" data-testid="history">
+                @for (var i = w.History.Count - 1; i >= 0; i--)
+                {
+                    var tx = w.History[i];
+                    var last = i == w.History.Count - 1;
+                    <li class="tx @(w.Sign(tx) > 0 ? "in" : "out") @(tx.Cancelled ? "cancelled" : "")">
+                        <span class="tx-time">@Time(tx)</span>
+                        <span class="tx-text">@L.Describe(w, tx)</span>
+                        <Money Amount="@(w.Sign(tx) * tx.Amount)" Signed Class="tx-amount" />
+                        @if (tx.Kind == TxKind.TransferOut && !tx.Cancelled)
+                        {
+                            <button class="chip" @onclick="() => _show = tx"><Icon Name="qr" Size="16" />@L["history.showCode"]</button>
+                        }
+                        else if (last && tx.Kind is TxKind.Payment or TxKind.PassGo)
+                        {
+                            <button class="chip" @onclick="() => Undo(w.Undo)" data-testid="undo"><Icon Name="undo" Size="16" />@L["common.undo"]</button>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+
+        <Sheet Open="_show is not null" OpenChanged="_ => _show = null" Title="@L["wallet.send"]">
+            <ChildContent>
+            @if (_show is not null)
+            {
+                <TransferQr Wallet="w" Tx="_show" />
+                <p class="muted">@L["history.cancelHint"]</p>
+            }
+            </ChildContent>
+            <Footer>
+                <div class="btn-row">
+                    <button class="btn btn-ghost" @onclick="() => CancelTransfer(w)">@L["wallet.cancelTransfer"]</button>
+                    <button class="btn btn-primary grow" @onclick="() => _show = null">@L["common.done"]</button>
+                </div>
+            </Footer>
+        </Sheet>
+    }
+    else
+    {
+        <EmptyHistory />
+    }
+</main>
+
+@code {
+    private Transaction? _show;
+
+    private static string Time(Transaction tx) => tx.Time.ToLocalTime().ToString("HH:mm");
+
+    private Task Undo(Func<Transaction> undo) => Try(async () =>
+    {
+        await Store.Run(undo);
+        Toasts.Show(L["history.undone"]);
+    });
+
+    private Task CancelTransfer(WalletGame w) => Try(async () =>
+    {
+        await Store.Run(() => w.CancelSend(_show!.Id));
+        _show = null;
+        Toasts.Show(L["wtx.cancelled"]);
+    });
+}

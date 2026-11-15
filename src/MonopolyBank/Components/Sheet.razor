@@ -1,0 +1,38 @@
+@* Modal bottom sheet (centered dialog on wide screens). *@
+@if (Open)
+{
+    <div class="sheet-backdrop" @onclick="Close"></div>
+    <div class="sheet @Class" role="dialog" aria-modal="true" aria-label="@Title" tabindex="-1" @ref="_el" @onkeydown="OnKey">
+        <div class="sheet-head">
+            <h2>@Title</h2>
+            <button class="icon-btn" type="button" @onclick="Close" aria-label="@L["common.close"]"><Icon Name="close" /></button>
+        </div>
+        <div class="sheet-body">@ChildContent</div>
+        @if (Footer is not null)
+        {
+            <div class="sheet-foot">@Footer</div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    private ElementReference _el;
+    private bool _wasOpen;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Move focus into the dialog when it opens (Escape closes, screen readers announce it).
+        if (Open && !_wasOpen) await _el.FocusAsync(preventScroll: true);
+        _wasOpen = Open;
+    }
+
+    private Task Close() => OpenChanged.InvokeAsync(false);
+    private Task OnKey(KeyboardEventArgs e) => e.Key == "Escape" ? Close() : Task.CompletedTask;
+}

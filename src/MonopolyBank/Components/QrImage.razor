@@ -1,0 +1,18 @@
+@inherits ComponentBase
+<img class="qr" src="@_uri" alt="@Alt" width="@Size" height="@Size" data-qr="@Text" />
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+    [Parameter] public string? Alt { get; set; }
+    [Parameter] public int Size { get; set; } = 240;
+
+    private string? _for;
+    private string _uri = "";
+
+    protected override void OnParametersSet()
+    {
+        if (_for == Text) return;
+        _for = Text;
+        _uri = QrService.DataUri(Text);
+    }
+}

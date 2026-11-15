@@ -1,0 +1,83 @@
+@page "/join"
+
+<PageTitle>@L["join.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["join.title"]" Back="" />
+
+<main class="page setup">
+    @if (_code is null)
+    {
+        <p class="lead">@L["join.scanIntro"]</p>
+        <QrScanner OnScan="OnScan" />
+        <section class="card form-card">
+            <label class="field">
+                <span>@L["join.typeCode"]</span>
+                <CodeInput @bind-Value="_typed" Chars="16" TestId="game-code" OnEnter="UseTyped" />
+            </label>
+            <button class="btn btn-primary btn-block" @onclick="UseTyped" data-testid="use-code">@L["common.next"] <Icon Name="go" /></button>
+        </section>
+    }
+    else
+    {
+        @if (Store.State.HasGame)
+        {
+            <p class="notice">@L["setup.replaceWarning"]</p>
+        }
+        <section class="card rules-summary" data-testid="join-rules">
+            <span class="eyebrow">@L["join.found"]</span>
+            <dl>
+                <dt>@L["setup.startMoney"]</dt><dd><Money Amount="_code.Value.StartMoney" Settings="_look" /></dd>
+                <dt>@L["setup.goSalary"]</dt><dd><Money Amount="_code.Value.GoSalary" Settings="_look" /></dd>
+            </dl>
+        </section>
+        <YouForm @bind-Name="_name" @bind-Token="_token" @bind-Color="_color" Placeholder="@DefaultName" />
+        <section class="card form-card">
+            <h2 class="card-title">@L["join.moneyLook"]</h2>
+            <p class="muted small">@L["join.currencyHint"]</p>
+            <MoneyLookForm Settings="_look" />
+        </section>
+        <div class="sticky-cta">
+            <button class="btn btn-primary btn-lg btn-block" @onclick="DoJoin" data-testid="join-game">@L["join.join"] <Icon Name="go" /></button>
+        </div>
+    }
+</main>
+
+@inject EditionStore EditionsStore
+@code {
+    [SupplyParameterFromQuery(Name = "g")] public string? LinkCode { get; set; }
+
+    private GameCode? _code;
+    private string _typed = "", _name = "", _token = Texts.Tokens[1], _color = Texts.Colors[7];
+    private GameSettings _look = new();
+
+    protected override void OnParametersSet()
+    {
+        // The join link carries the currency too (c, ca); read it from the current URL.
+        if (_code is null && QrPayload.TryGetGameCode(LinkCode, out var c))
+            Found(c, QrPayload.LookFromQuery(QrPayload.ParseQuery(new Uri(Nav.Uri).Query)));
+    }
+
+    // Joining phones don't know their number; the token tells players apart ("Player 🚗").
+    private string DefaultName => L["setup.playerName", _token];
+
+    private void OnScan(string text)
+    {
+        if (QrPayload.TryGetInvite(text, out var c, out var look)) Found(c, look);
+        else Toasts.Error(L["err.InvalidCode"]);
+    }
+
+    /// <summary>Without look info (typed code) guess it from an edition with the same rules.</summary>
+    private void Found(GameCode code, GameSettings? look)
+    {
+        _code = code;
+        if (look is null) EditionsStore.Guess(code.StartMoney, code.GoSalary).ApplyTo(_look);
+        else _look = look;
+    }
+
+    private void UseTyped() => OnScan(_typed);
+
+    private Task DoJoin() => Try(async () =>
+    {
+        await Store.StartAsync(WalletGame.Join(_code!.Value, _look, string.IsNullOrWhiteSpace(_name) ? DefaultName : _name, _token, _color));
+        Nav.NavigateTo("wallet", replace: true);
+    });
+}

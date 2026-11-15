@@ -1,0 +1,10 @@
+@* Language switcher: one chip per available i18n/*.json file. *@
+<div class="lang-bar" role="group" aria-label="@L["settings.language"]">
+    @foreach (var lang in L.Languages)
+    {
+        <button type="button" class="chip @(lang.Code == L.Current.Code ? "selected" : "")" lang="@lang.Code"
+                @onclick="() => L.SetAsync(lang.Code)" data-testid="lang-@lang.Code">
+            <span aria-hidden="true">@lang.Flag</span> @lang.Name
+        </button>
+    }
+</div>

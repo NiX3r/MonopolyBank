@@ -1,0 +1,18 @@
+@* Money amount; the "M" symbol is styled like the board game's double-struck M. Symbol before or after per game settings. *@
+<span class="money @Class">@SignText@if (!After && Cur.Length > 0)
+{<span class="cur @CurClass">@Cur</span>}@L.Number(Math.Abs(Amount))@if (After && Cur.Length > 0)
+{<text>&nbsp;</text><span class="cur @CurClass">@Cur</span>}</span>
+
+@code {
+    [Parameter] public long Amount { get; set; }
+    [Parameter] public bool Signed { get; set; }
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Settings to format with (previews); defaults to the current game.</summary>
+    [Parameter] public GameSettings? Settings { get; set; }
+
+    private GameSettings? S => Settings ?? Store.Settings;
+    private string Cur => S?.Currency ?? "M";
+    private bool After => S?.CurrencyAfter ?? false;
+    private string CurClass => Cur == "M" ? "cur-m" : "";
+    private string SignText => Amount < 0 ? "−" : Signed && Amount > 0 ? "+" : "";
+}

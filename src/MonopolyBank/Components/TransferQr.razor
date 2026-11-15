@@ -1,0 +1,12 @@
+@* The QR + typed code of an outgoing transfer, shown to the receiving player. *@
+<div class="qr-block transfer-qr">
+    <div class="transfer-amount"><Money Amount="Tx.Amount" /></div>
+    <QrImage Text="@QrPayload.ForTransfer(Tx.Code!, Wallet.Me.Name)" Alt="@L["wallet.send"]" />
+    <p class="muted center">@L["wallet.showQr"]</p>
+    <CodeBox Code="@(Tx.Code!)" TestId="sent-code" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public WalletGame Wallet { get; set; } = default!;
+    [Parameter, EditorRequired] public Transaction Tx { get; set; } = default!;
+}

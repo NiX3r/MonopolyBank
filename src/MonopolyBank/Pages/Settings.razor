@@ -1,0 +1,99 @@
+@page "/settings"
+@inject Browser Browser
+
+<PageTitle>@L["settings.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["settings.title"]" Back="@BackUrl" />
+
+<main class="page settings">
+    <section class="card">
+        <h2 class="card-title"><Icon Name="globe" />@L["settings.language"]</h2>
+        <LanguageBar />
+    </section>
+
+    <section class="card">
+        <label class="toggle">
+            <input type="checkbox" checked="@Store.KeepAwake" @onchange="e => Store.SetKeepAwakeAsync(e.Value is true)" />
+            <span class="toggle-ui" aria-hidden="true"></span>
+            <span><strong>@L["settings.keepAwake"]</strong><small>@L["settings.keepAwakeHint"]</small></span>
+        </label>
+    </section>
+
+    @if (_install is "available" or "ios")
+    {
+        <section class="card">
+            <h2 class="card-title"><Icon Name="download" />@L["settings.install"]</h2>
+            @if (_install == "available")
+            {
+                <p class="muted">@L["settings.installHint"]</p>
+                <button class="btn btn-secondary" @onclick="Install">@L["settings.installButton"]</button>
+            }
+            else
+            {
+                <p class="muted">@L["settings.installIos"]</p>
+            }
+        </section>
+    }
+
+    @if (Store.Settings is { } s)
+    {
+        <section class="card">
+            <h2 class="card-title">@L["settings.game"]</h2>
+            <dl class="kv">
+                <dt>@L["settings.mode"]</dt>
+                <dd>@(Store.State.Mode == GameMode.Wallet ? L["home.wallet.title"] : L["home.shared.title"])</dd>
+                <dt>@L["setup.startMoney"]</dt><dd><Money Amount="s.StartMoney" /></dd>
+                <dt>@L["setup.goSalary"]</dt><dd><Money Amount="s.GoSalary" /></dd>
+            </dl>
+            <MoneyLookForm Settings="s" Changed="Store.SaveAsync" />
+            <button class="btn btn-danger btn-block" @onclick="() => _confirmEnd = true" data-testid="end-game"><Icon Name="trash" />@L["settings.endGame"]</button>
+        </section>
+    }
+
+    <section class="card about">
+        <h2 class="card-title">@L["settings.about"]</h2>
+        <p class="muted">@L["settings.privacy"]</p>
+        <p><a class="link" href="help">@L["help.title"]</a></p>
+        <p class="muted small">Monopoly Bank v@(Version) · @L["settings.disclaimer"]</p>
+    </section>
+</main>
+
+<Sheet @bind-Open="_confirmEnd" Title="@L["settings.endGame"]">
+    <ChildContent>
+    <p>@L["settings.endGameConfirm"]</p>
+    </ChildContent>
+    <Footer>
+        <div class="btn-row">
+            <button class="btn btn-ghost grow" @onclick="() => _confirmEnd = false">@L["common.cancel"]</button>
+            <button class="btn btn-danger grow" @onclick="EndGame" data-testid="confirm-end">@L["settings.endGame"]</button>
+        </div>
+    </Footer>
+</Sheet>
+
+@code {
+    private string _install = "";
+    private bool _confirmEnd;
+
+    private static readonly string Version =
+        typeof(Settings).Assembly.GetName().Version?.ToString(3) ?? "1.0.0";
+
+    private string BackUrl => Store.State.Mode switch
+    {
+        GameMode.Shared when Store.State.HasGame => "bank",
+        GameMode.Wallet when Store.State.HasGame => "wallet",
+        _ => "",
+    };
+
+    protected override async Task OnInitializedAsync() => _install = await Browser.InstallState();
+
+    private async Task Install()
+    {
+        await Browser.Install();
+        _install = await Browser.InstallState();
+    }
+
+    private async Task EndGame()
+    {
+        await Store.EndGameAsync();
+        Nav.NavigateTo("", replace: true);
+    }
+}

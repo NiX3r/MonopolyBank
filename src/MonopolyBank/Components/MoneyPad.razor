@@ -1,0 +1,43 @@
+@* Amount entry like a card terminal: type the amount on the keypad (a physical keyboard works too). *@
+<div class="moneypad" tabindex="0" @onkeydown="OnKey">
+    <div class="pad-display @(Value == 0 ? "empty" : "")" style="--chars: @L.Money(Store.Settings, Value).Length" data-testid="pad-amount">
+        <Money Amount="Value" />
+        @if (Hint is not null)
+        {
+            <small>@Hint</small>
+        }
+        @if (Value > 0)
+        {
+            <button type="button" class="pad-clear" @onclick="() => Set(0)" aria-label="@L["pad.clear"]" data-testid="pad-clear">×</button>
+        }
+    </div>
+    <div class="keys">
+        @for (var d = 1; d <= 9; d++)
+        {
+            var digit = d;
+            <button type="button" class="key" @onclick="() => Digit(digit)" data-testid="key-@digit">@digit</button>
+        }
+        <button type="button" class="key key-muted" @onclick="Thousands" data-testid="key-000">000</button>
+        <button type="button" class="key" @onclick="() => Digit(0)" data-testid="key-0">0</button>
+        <button type="button" class="key key-muted" @onclick="Backspace" aria-label="@L["pad.backspace"]" data-testid="key-back">⌫</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public long Value { get; set; }
+    [Parameter] public EventCallback<long> ValueChanged { get; set; }
+    [Parameter] public string? Hint { get; set; }
+
+    private Task Set(long v) => ValueChanged.InvokeAsync(Math.Clamp(v, 0, Limits.MaxAmount));
+    private Task Digit(int d) => Value * 10 + d > Limits.MaxAmount ? Task.CompletedTask : Set(Value * 10 + d);
+    private Task Thousands() => Value == 0 || Value * 1000 > Limits.MaxAmount ? Task.CompletedTask : Set(Value * 1000);
+    private Task Backspace() => Set(Value / 10);
+
+    private Task OnKey(KeyboardEventArgs e) => e.Key switch
+    {
+        { Length: 1 } k when char.IsAsciiDigit(k[0]) => Digit(k[0] - '0'),
+        "Backspace" => Backspace(),
+        "Delete" or "c" or "C" or "Escape" when Value > 0 => Set(0),
+        _ => Task.CompletedTask,
+    };
+}

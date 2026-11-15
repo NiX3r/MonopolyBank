@@ -1,0 +1,36 @@
+@inject Browser Browser
+@* Shown when a new version was downloaded in the background; tapping Update activates it. *@
+@if (_ready)
+{
+    <div class="update-banner" role="status">
+        <span>@L["update.ready"]</span>
+        <button class="btn btn-small btn-yellow" @onclick="Apply">@L["update.apply"]</button>
+    </div>
+}
+
+@code {
+    private bool _ready;
+    private DotNetObjectReference<UpdateBanner>? _ref;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        _ref = DotNetObjectReference.Create(this);
+        await Browser.OnUpdateReady(_ref);
+    }
+
+    private async Task Apply() => await Browser.ApplyUpdate();
+
+    [JSInvokable]
+    public void OnUpdateReady()
+    {
+        _ready = true;
+        StateHasChanged();
+    }
+
+    public override void Dispose()
+    {
+        _ref?.Dispose();
+        base.Dispose();
+    }
+}

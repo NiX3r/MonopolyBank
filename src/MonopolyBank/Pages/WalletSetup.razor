@@ -1,0 +1,33 @@
+@page "/new/wallet"
+
+<PageTitle>@L["setup.wallet.title"] · Monopoly Bank</PageTitle>
+<TopBar Title="@L["setup.wallet.title"]" Back="" />
+
+<main class="page setup">
+    @if (Store.State.HasGame)
+    {
+        <p class="notice">@L["setup.replaceWarning"]</p>
+    }
+    <p class="lead">@L["setup.wallet.intro"]</p>
+
+    <RulesForm Settings="_settings" />
+    <YouForm @bind-Name="_name" @bind-Token="_token" @bind-Color="_color" Placeholder="@DefaultName" />
+
+    <div class="sticky-cta">
+        <button class="btn btn-primary btn-lg btn-block" @onclick="Create" data-testid="create-wallet">@L["setup.wallet.create"] <Icon Name="go" /></button>
+    </div>
+</main>
+
+@code {
+    private readonly GameSettings _settings = new();
+    private string _name = "", _token = Texts.Tokens[0], _color = Texts.Colors[4];
+
+    // The host is the first player.
+    private string DefaultName => L["setup.playerName", 1];
+
+    private Task Create() => Try(async () =>
+    {
+        await Store.StartAsync(WalletGame.Host(_settings, string.IsNullOrWhiteSpace(_name) ? DefaultName : _name, _token, _color));
+        Nav.NavigateTo("wallet?invite=1");
+    });
+}

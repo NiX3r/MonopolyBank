@@ -1,0 +1,27 @@
+@inject Browser Browser
+@* Text field for game/payment codes: "-" is inserted automatically every 4 characters (see mb.codeInput). *@
+<input @ref="_input" class="code-input" placeholder="@Placeholder" autocapitalize="characters" autocomplete="off" autocorrect="off"
+       spellcheck="false" enterkeyhint="go" value="@Value" @oninput="OnInput"
+       @onkeydown="OnKey" data-testid="@TestId" />
+
+@code {
+    private ElementReference _input;
+
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    /// <summary>Code length without dashes (16 game, 12 payment).</summary>
+    [Parameter] public int Chars { get; set; } = 16;
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public EventCallback OnEnter { get; set; }
+
+    private string Placeholder => string.Join('-', Enumerable.Repeat("XXXX", Chars / 4));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await Browser.CodeInput(_input, Chars);
+    }
+
+    private Task OnInput(ChangeEventArgs e) => ValueChanged.InvokeAsync(e.Value?.ToString() ?? string.Empty);
+
+    private Task OnKey(KeyboardEventArgs e) => e.Key == "Enter" ? OnEnter.InvokeAsync() : Task.CompletedTask;
+}

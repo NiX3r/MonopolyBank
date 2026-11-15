@@ -1,0 +1,68 @@
+# Builds the app and publishes it to GitHub Pages on every push to main (or by hand from the Actions tab).
+# One-time setup: repo Settings → Pages → Source: "GitHub Actions".
+# Optional: repo Settings → Secrets and variables → Actions → Variables → PING_URL (empty = no usage ping).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Test
+        run: dotnet test tests/MonopolyBank.Tests -c Release
+
+      # Must happen BEFORE publish: index.html and appsettings.json are hashed into the offline cache list.
+      - name: Point the app at the Pages URL
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}  # "/<repo>" or "" for a custom domain
+          PING_URL: ${{ vars.PING_URL }}
+        run: |
+          sed -i "s|<base href=\"/\" />|<base href=\"${BASE_PATH}/\" />|" src/MonopolyBank/wwwroot/index.html
+          grep -q "<base href=\"${BASE_PATH}/\" />" src/MonopolyBank/wwwroot/index.html
+          jq -n --arg url "$PING_URL" '{Ping: {Url: $url}}' > src/MonopolyBank/wwwroot/appsettings.json
+
+      - name: Publish
+        run: dotnet publish src/MonopolyBank -c Release -o out -p:CompressionEnabled=false
+
+      # .nojekyll: serve the "_framework" folder. 404.html: deep links (e.g. invite /join?g=…) load the app.
+      - name: Prepare site
+        run: |
+          touch out/wwwroot/.nojekyll
+          cp out/wwwroot/index.html out/wwwroot/404.html
+          rm -f out/wwwroot/web.config
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out/wwwroot
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
