@@ -25,6 +25,7 @@ Tap *Save as my edition* to keep your settings under a name such as "Grandma's b
 
 ## 3. One shared bank
 - Every player has a **title deed card** showing their balance.
+- The **Bank** has its own card with unlimited money: **Pay** = the bank pays someone, **Get** = someone pays the bank.
 - **GO +200** – player passed GO.
 - **Pay** – money from this player. Choose who receives it (bank, Free Parking, another player).
 - **Coin** – drag a player's coin onto another player, the bank or Free Parking: who pays and who receives are already filled in, just type the amount. Tapping the coin works like **Pay**.

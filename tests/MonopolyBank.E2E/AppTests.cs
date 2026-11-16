@@ -197,7 +197,7 @@ public class AppTests : PageTest
         await Expect(Balance(Page, "Ben")).ToHaveTextAsync("M1,700");
 
         // Ben → Bank
-        await DragCoin(Page.Locator("[data-player=Ben] [data-testid=coin]"), Page.GetByTestId("bank-tile"));
+        await DragCoin(Page.Locator("[data-player=Ben] [data-testid=coin]"), Page.GetByTestId("bank-card"));
         await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToContainTextAsync("Bank");
         foreach (var d in "50") await Page.GetByTestId($"key-{d}").ClickAsync();
         await Page.GetByTestId("confirm-pay").ClickAsync();
@@ -207,6 +207,25 @@ public class AppTests : PageTest
         await Page.Locator("[data-player=Anna] [data-testid=coin]").ClickAsync();
         await Expect(Page.GetByTestId("from").Locator(".chip.selected")).ToContainTextAsync("Anna");
         await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToHaveCountAsync(0);
+        await Page.Keyboard.PressAsync("Escape");
+
+        // The bank has its own card: Get = someone pays the bank, Pay = the bank pays someone
+        var bank = Page.GetByTestId("bank-card");
+        await Expect(bank).ToContainTextAsync("∞");
+        await bank.GetByTestId("receive").ClickAsync();
+        await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToContainTextAsync("Bank");
+        await Expect(Page.GetByTestId("from").Locator(".chip.selected")).ToHaveCountAsync(0);
+        await Page.GetByTestId("from").GetByRole(AriaRole.Button, new() { Name = "Anna" }).ClickAsync();
+        foreach (var d in "100") await Page.GetByTestId($"key-{d}").ClickAsync();
+        await Page.GetByTestId("confirm-pay").ClickAsync();
+        await Expect(Balance(Page, "Anna")).ToHaveTextAsync("M1,200");
+
+        await bank.GetByTestId("pay").ClickAsync();
+        await Expect(Page.GetByTestId("from").Locator(".chip.selected")).ToContainTextAsync("Bank");
+        await Page.GetByTestId("to").GetByRole(AriaRole.Button, new() { Name = "Ben" }).ClickAsync();
+        foreach (var d in "350") await Page.GetByTestId($"key-{d}").ClickAsync();
+        await Page.GetByTestId("confirm-pay").ClickAsync();
+        await Expect(Balance(Page, "Ben")).ToHaveTextAsync("M2,000");
     }
 
     [Test]

@@ -104,6 +104,8 @@
   "bank.collectPot": "Vybrat",
   "bank.coin": "Platit od: {0}",
   "bank.dragHint": "Přetáhni minci na toho, kdo peníze dostane.",
+  "bank.cardLabel": "Platí a vybírá",
+  "bank.unlimited": "Neomezeně",
 
   "pay.title": "Platba",
   "pay.from": "Od",

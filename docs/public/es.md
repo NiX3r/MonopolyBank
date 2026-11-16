@@ -25,6 +25,7 @@ Con *Guardar como mi edición* guardas la configuración con un nombre como «La
 
 ## 3. Un banco compartido
 - Cada jugador tiene una **tarjeta de título de propiedad** con su saldo.
+- El **Banco** tiene su propia tarjeta con dinero ilimitado: **Pagar** = el banco paga a alguien, **Cobrar** = alguien paga al banco.
 - **SALIDA +200** – el jugador pasó por la SALIDA.
 - **Pagar** – dinero de este jugador. Elige quién lo recibe (banco, Parking gratuito, otro jugador).
 - **Moneda** – arrastra la moneda de un jugador hasta otro jugador, el banco o el Parking gratuito: quién paga y quién recibe ya están elegidos, solo escribe el importe. Tocar la moneda funciona como **Pagar**.

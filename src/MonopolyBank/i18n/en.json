@@ -104,6 +104,8 @@
   "bank.collectPot": "Collect",
   "bank.coin": "Pay from {0}",
   "bank.dragHint": "Drag a coin onto whoever gets the money.",
+  "bank.cardLabel": "Pays & collects",
+  "bank.unlimited": "Unlimited",
 
   "pay.title": "Payment",
   "pay.from": "From",

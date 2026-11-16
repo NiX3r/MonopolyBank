@@ -13,14 +13,6 @@
     </TopBar>
 
     <main class="page bank" @ref="_root">
-        <section class="bank-tile" data-party="@BankKey" data-testid="bank-tile">
-            <Coin Party="@BankKey" Label="@L["bank.coin", L["party.bank"]]" OnClick="() => OpenPay(Party.Bank, null)" />
-            <div>
-                <span class="eyebrow">@L["party.bank"]</span>
-                <span class="muted small">@L["bank.dragHint"]</span>
-            </div>
-        </section>
-
         @if (game.Settings.FreeParkingPot)
         {
             <section class="pot-card" data-party="@PotKey" data-testid="pot">
@@ -33,7 +25,28 @@
             </section>
         }
 
+        <p class="muted small drag-hint">@L["bank.dragHint"]</p>
+
         <div class="deed-grid">
+            @* The bank plays along like a player: unlimited money, pays and collects. *@
+            <article class="deed deed-bank" data-party="@BankKey" data-testid="bank-card">
+                <header class="deed-head">
+                    <span class="deed-label">@L["bank.cardLabel"]</span>
+                    <h3 class="deed-name"><span class="deed-token" aria-hidden="true">🏦</span>@L["party.bank"]</h3>
+                </header>
+                <div class="deed-body">
+                    <div class="deed-top">
+                        <span class="deed-caption">@L["card.balance"]</span>
+                        <Coin Party="@BankKey" Label="@L["bank.coin", L["party.bank"]]" OnClick="() => OpenPay(Party.Bank, null)" />
+                    </div>
+                    <div class="deed-balance" role="img" aria-label="@L["bank.unlimited"]" title="@L["bank.unlimited"]">∞</div>
+                    <div class="deed-actions">
+                        <button class="chip" @onclick="() => OpenPay(Party.Bank, null)" data-testid="pay"><Icon Name="send" Size="16" />@L["bank.pay"]</button>
+                        <button class="chip" @onclick="() => OpenPay(null, Party.Bank)" data-testid="receive"><Icon Name="receive" Size="16" />@L["bank.receive"]</button>
+                    </div>
+                </div>
+            </article>
+
             @foreach (var p in game.Players)
             {
                 <PlayerCard Player="p" @key="p.Id" DropKey="@Key(Party.Of(p.Id))">

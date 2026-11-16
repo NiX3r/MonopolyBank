@@ -25,6 +25,7 @@ Mit *Als meine Version speichern* behältst du die Einstellungen unter einem Nam
 
 ## 3. Eine gemeinsame Bank
 - Jeder Spieler hat eine **Besitzrechtkarte** mit seinem Kontostand.
+- Die **Bank** hat eine eigene Karte mit unbegrenztem Geld: **Zahlen** = die Bank zahlt jemandem, **Erhalten** = jemand zahlt an die Bank.
 - **LOS +200** – Spieler ist über LOS gegangen.
 - **Zahlen** – Geld von diesem Spieler. Wähle den Empfänger (Bank, Frei Parken, anderer Spieler).
 - **Münze** – zieh die Münze eines Spielers auf einen anderen Spieler, die Bank oder Frei Parken: Zahler und Empfänger sind schon ausgewählt, du gibst nur den Betrag ein. Antippen der Münze wirkt wie **Zahlen**.

@@ -104,6 +104,8 @@
   "bank.collectPot": "Cobrar",
   "bank.coin": "Pagar desde {0}",
   "bank.dragHint": "Arrastra una moneda hasta quien recibe el dinero.",
+  "bank.cardLabel": "Paga y cobra",
+  "bank.unlimited": "Ilimitado",
 
   "pay.title": "Pago",
   "pay.from": "De",

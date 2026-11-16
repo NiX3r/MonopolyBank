@@ -25,6 +25,7 @@ Tlačítkem *Uložit jako mou verzi* si nastavení uložíš pod jménem, třeba
 
 ## 3. Jedna společná banka
 - Každý hráč má **kartu (list vlastnictví)** se svým zůstatkem.
+- **Banka** má vlastní kartu s neomezenými penězi: **Platit** = banka někomu platí, **Dostat** = někdo platí bance.
 - **START +200** – hráč prošel STARTEM.
 - **Platit** – peníze od tohoto hráče. Vyber příjemce (banka, Parkoviště, jiný hráč).
 - **Mince** – přetáhni minci hráče na jiného hráče, banku nebo Parkoviště: kdo platí a kdo dostává je už vyplněno, stačí zadat částku. Klepnutí na minci funguje jako **Platit**.

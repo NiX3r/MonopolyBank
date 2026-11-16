@@ -104,6 +104,8 @@
   "bank.collectPot": "Einsammeln",
   "bank.coin": "Zahlung von {0}",
   "bank.dragHint": "Zieh eine Münze auf den, der das Geld bekommt.",
+  "bank.cardLabel": "Zahlt & kassiert",
+  "bank.unlimited": "Unbegrenzt",
 
   "pay.title": "Zahlung",
   "pay.from": "Von",
