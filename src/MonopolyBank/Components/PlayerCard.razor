@@ -1,12 +1,19 @@
 @* A player as a "Title Deed" card: colored header band, name, big balance. *@
 <article class="deed deed-@Player.Color @(Big ? "deed-big" : "") @(Player.Bankrupt ? "is-bankrupt" : "")"
-         data-testid="player-card" data-player="@Player.Name">
+         data-testid="player-card" data-player="@Player.Name" data-party="@(Player.Bankrupt ? null : DropKey)">
     <header class="deed-head">
         <span class="deed-label">@L["card.titleDeed"]</span>
         <h3 class="deed-name"><span class="deed-token" aria-hidden="true">@Player.Token</span>@Player.Name</h3>
     </header>
     <div class="deed-body">
-        <span class="deed-caption">@L["card.balance"]</span>
+        @if (Handle is not null && !Player.Bankrupt)
+        {
+            <div class="deed-top"><span class="deed-caption">@L["card.balance"]</span>@Handle</div>
+        }
+        else
+        {
+            <span class="deed-caption">@L["card.balance"]</span>
+        }
         <div class="deed-balance @_flash" @key="_flashKey" style="--chars: @Money(Player.Balance).Length" data-testid="balance"><Money Amount="Player.Balance" /></div>
         @if (Player.Bankrupt)
         {
@@ -23,6 +30,10 @@
     [Parameter, EditorRequired] public Player Player { get; set; } = default!;
     [Parameter] public bool Big { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Drag handle shown beside the balance caption (shared bank).</summary>
+    [Parameter] public RenderFragment? Handle { get; set; }
+    /// <summary>Makes the card a coin drop target (data-party); ignored once bankrupt.</summary>
+    [Parameter] public string? DropKey { get; set; }
 
     private long? _last;
     private string _flash = "";

@@ -27,6 +27,7 @@ Tlačítkem *Uložit jako mou verzi* si nastavení uložíš pod jménem, třeba
 - Každý hráč má **kartu (list vlastnictví)** se svým zůstatkem.
 - **START +200** – hráč prošel STARTEM.
 - **Platit** – peníze od tohoto hráče. Vyber příjemce (banka, Parkoviště, jiný hráč).
+- **Mince** – přetáhni minci hráče na jiného hráče, banku nebo Parkoviště: kdo platí a kdo dostává je už vyplněno, stačí zadat částku. Klepnutí na minci funguje jako **Platit**.
 - **Dostat** – peníze pro tohoto hráče (standardně od banky).
 - Částku zadáš na klávesnici jako na platebním terminálu. **000** přidá tři nuly, **×** částku smaže.
 - **⋯ → Vyhlásit bankrot** – zbylé peníze hráče dostane věřitel a hráč končí.

@@ -1,0 +1,11 @@
+@* Drag handle for paying: drag onto another [data-party] (wired in Bank via mb.coinDrag), or tap to open the payment. *@
+<button type="button" class="coin" data-coin="@Party" aria-label="@Label" title="@Label" @onclick="OnClick" data-testid="coin">
+    <span>@(string.IsNullOrWhiteSpace(Currency) ? "¤" : Currency)</span>
+</button>
+
+@code {
+    /// <summary>Party key, same format as the drop target's data-party (see Bank.Key).</summary>
+    [Parameter, EditorRequired] public string Party { get; set; } = "";
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    [Parameter] public EventCallback OnClick { get; set; }
+}

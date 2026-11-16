@@ -168,6 +168,47 @@ public class AppTests : PageTest
         await Expect(Balance(Page, "Ben")).ToHaveTextAsync("M20,500,000");
     }
 
+    private async Task DragCoin(ILocator coin, ILocator target)
+    {
+        var from = (await coin.BoundingBoxAsync())!;
+        var to = (await target.BoundingBoxAsync())!;
+        await Page.Mouse.MoveAsync(from.X + from.Width / 2, from.Y + from.Height / 2);
+        await Page.Mouse.DownAsync();
+        await Page.Mouse.MoveAsync(to.X + to.Width / 2, to.Y + to.Height / 2, new() { Steps = 8 });
+        await Page.Mouse.UpAsync();
+    }
+
+    [Test]
+    public async Task SharedBank_DragCoinOntoPlayer_OpensPaymentWithBothSides()
+    {
+        await OpenApp(Page, "new/shared");
+        var names = Page.GetByTestId("player-name");
+        await names.Nth(0).FillAsync("Anna");
+        await names.Nth(1).FillAsync("Ben");
+        await Page.GetByTestId("start-game").ClickAsync();
+
+        // Anna → Ben: only the amount is left to type
+        await DragCoin(Page.Locator("[data-player=Anna] [data-testid=coin]"), Page.Locator("[data-player=Ben]"));
+        await Expect(Page.GetByTestId("from").Locator(".chip.selected")).ToContainTextAsync("Anna");
+        await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToContainTextAsync("Ben");
+        foreach (var d in "200") await Page.GetByTestId($"key-{d}").ClickAsync();
+        await Page.GetByTestId("confirm-pay").ClickAsync();
+        await Expect(Balance(Page, "Anna")).ToHaveTextAsync("M1,300");
+        await Expect(Balance(Page, "Ben")).ToHaveTextAsync("M1,700");
+
+        // Ben → Bank
+        await DragCoin(Page.Locator("[data-player=Ben] [data-testid=coin]"), Page.GetByTestId("bank-tile"));
+        await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToContainTextAsync("Bank");
+        foreach (var d in "50") await Page.GetByTestId($"key-{d}").ClickAsync();
+        await Page.GetByTestId("confirm-pay").ClickAsync();
+        await Expect(Balance(Page, "Ben")).ToHaveTextAsync("M1,650");
+
+        // A tap (no drag) still opens the payment with only the payer picked
+        await Page.Locator("[data-player=Anna] [data-testid=coin]").ClickAsync();
+        await Expect(Page.GetByTestId("from").Locator(".chip.selected")).ToContainTextAsync("Anna");
+        await Expect(Page.GetByTestId("to").Locator(".chip.selected")).ToHaveCountAsync(0);
+    }
+
     [Test]
     public async Task MoneyPad_FastTaps_RegisterEveryDigit_WithoutDoubleTapZoom()
     {

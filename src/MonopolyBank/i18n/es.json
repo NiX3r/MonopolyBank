@@ -92,6 +92,8 @@
   "bank.pay": "Pagar",
   "bank.receive": "Cobrar",
   "bank.collectPot": "Cobrar",
+  "bank.coin": "Pagar desde {0}",
+  "bank.dragHint": "Arrastra una moneda hasta quien recibe el dinero.",
 
   "pay.title": "Pago",
   "pay.from": "De",

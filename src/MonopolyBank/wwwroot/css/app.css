@@ -451,6 +451,64 @@ input:focus { outline: 3px solid var(--focus); outline-offset: 1px; }
 .pot-card .eyebrow { color: var(--ink); }
 .pot-amount { font-family: var(--font-display); font-size: 1.8rem; }
 
+/* ---- Coins: drag one onto another player/bank/pot to pay (shared bank) ---- */
+.coin {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6b0, var(--chest) 55%, #e2b80f);
+  box-shadow: var(--shadow-sm), inset 0 0 0 3px rgba(255, 255, 255, .45);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: .78rem;
+  line-height: 1;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.coin span { max-width: 30px; overflow: hidden; white-space: nowrap; }
+.coin:active { cursor: grabbing; }
+.coin-ghost {
+  position: fixed;
+  left: -28px;
+  top: -28px;
+  z-index: 1000;
+  width: 56px;
+  height: 56px;
+  font-size: 1rem;
+  pointer-events: none;
+  box-shadow: 5px 5px 0 var(--ink), inset 0 0 0 4px rgba(255, 255, 255, .45);
+}
+.deed-top { width: 100%; display: grid; grid-template-columns: 36px 1fr 36px; align-items: center; }
+.deed-top .deed-caption { grid-column: 2; text-align: center; }
+.deed-top .coin { grid-column: 3; }
+
+body.coin-dragging { cursor: grabbing; -webkit-user-select: none; user-select: none; }
+body.coin-dragging [data-party] { outline: 3px dashed rgba(20, 20, 20, .4); outline-offset: 3px; }
+body.coin-dragging .drag-source { outline: none; opacity: .55; }
+[data-party] { transition: transform .12s ease; }
+body.coin-dragging .drop-over { outline: 3px solid var(--ink); transform: scale(1.04); }
+
+.bank-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--paper);
+  border: var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.bank-tile .eyebrow { color: var(--ink); }
+.pot-info { flex: 1; min-width: 0; }
+
 /* ---- Wallet ---- */
 .wallet .deed-big { max-width: 520px; width: 100%; margin: 0 auto; }
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 520px; width: 100%; margin: 0 auto; }

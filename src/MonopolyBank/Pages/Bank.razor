@@ -1,4 +1,5 @@
 @page "/bank"
+@inject Browser Browser
 
 <PageTitle>@L["bank.title"] · Monopoly Bank</PageTitle>
 
@@ -11,11 +12,20 @@
         </Actions>
     </TopBar>
 
-    <main class="page bank">
+    <main class="page bank" @ref="_root">
+        <section class="bank-tile" data-party="@BankKey" data-testid="bank-tile">
+            <Coin Party="@BankKey" Label="@L["bank.coin", L["party.bank"]]" OnClick="() => OpenPay(Party.Bank, null)" />
+            <div>
+                <span class="eyebrow">@L["party.bank"]</span>
+                <span class="muted small">@L["bank.dragHint"]</span>
+            </div>
+        </section>
+
         @if (game.Settings.FreeParkingPot)
         {
-            <section class="pot-card" data-testid="pot">
-                <div>
+            <section class="pot-card" data-party="@PotKey" data-testid="pot">
+                <Coin Party="@PotKey" Label="@L["bank.coin", L["party.pot"]]" OnClick="() => OpenPay(Party.Pot, null)" />
+                <div class="pot-info">
                     <span class="eyebrow">@L["party.pot"]</span>
                     <Money Amount="game.Pot" Class="pot-amount" />
                 </div>
@@ -26,13 +36,18 @@
         <div class="deed-grid">
             @foreach (var p in game.Players)
             {
-                <PlayerCard Player="p" @key="p.Id">
+                <PlayerCard Player="p" @key="p.Id" DropKey="@Key(Party.Of(p.Id))">
+                    <Handle>
+                        <Coin Party="@Key(Party.Of(p.Id))" Label="@L["bank.coin", p.Name]" OnClick="() => OpenPay(Party.Of(p.Id), null)" />
+                    </Handle>
+                    <ChildContent>
                     <button class="chip chip-go" @onclick="() => PassGo(p)" data-testid="go">
                         <Icon Name="go" Size="16" />@L["bank.go"] <Money Amount="game.Settings.GoSalary" Signed />
                     </button>
                     <button class="chip" @onclick="() => OpenPay(Party.Of(p.Id), null)" data-testid="pay"><Icon Name="send" Size="16" />@L["bank.pay"]</button>
                     <button class="chip" @onclick="() => OpenPay(Party.Bank, Party.Of(p.Id))" data-testid="receive"><Icon Name="receive" Size="16" />@L["bank.receive"]</button>
                     <button class="chip chip-icon" @onclick="() => _more = p" aria-label="@L["common.more"]" data-testid="more"><Icon Name="more" Size="16" /></button>
+                    </ChildContent>
                 </PlayerCard>
             }
         </div>
@@ -99,6 +114,9 @@
 }
 
 @code {
+    private const string BankKey = "bank", PotKey = "pot";
+    private ElementReference _root;
+    private DotNetObjectReference<Bank>? _self;
     private bool _payOpen;
     private Party? _from, _to;
     private long _amount;
@@ -108,6 +126,44 @@
     protected override void OnInitialized()
     {
         if (Store.Shared is null) Nav.NavigateTo("", replace: true);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_self is null && Store.Shared is not null)
+        {
+            _self = DotNetObjectReference.Create(this);
+            await Browser.CoinDrag(_root, _self);
+        }
+    }
+
+    /// <summary>Coin dropped on another party: open the payment with both sides picked, only the amount is left.</summary>
+    [JSInvokable]
+    public void OnCoinDrop(string from, string to)
+    {
+        if (Store.Shared is null || Parse(from) is not { } f || Parse(to) is not { } t || f == t) return;
+        OpenPay(f, t);
+        StateHasChanged();
+    }
+
+    private static string Key(Party p) => p.Kind switch
+    {
+        PartyKind.Bank => BankKey,
+        PartyKind.Pot => PotKey,
+        _ => p.PlayerId!.Value.ToString("N"),
+    };
+
+    private static Party? Parse(string key) => key switch
+    {
+        BankKey => Party.Bank,
+        PotKey => Party.Pot,
+        _ => Guid.TryParse(key, out var id) ? Party.Of(id) : null,
+    };
+
+    public override void Dispose()
+    {
+        _self?.Dispose();
+        base.Dispose();
     }
 
     private bool CanPay => _from is not null && _to is not null && _from != _to && _amount > 0;

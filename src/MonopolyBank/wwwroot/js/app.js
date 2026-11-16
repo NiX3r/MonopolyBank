@@ -64,6 +64,84 @@
         },
     };
 
+    // Shared bank: drag a [data-coin] onto another [data-party] → target.OnCoinDrop(from, to).
+    // Pointer events (touch + mouse); a tap without movement stays a normal click.
+    function coinDrag(root, target) {
+        if (!root || root.dataset.coinDrag) return;
+        root.dataset.coinDrag = '1';
+        let drag = null, suppressClick = 0;
+        const buzz = ms => safe(() => navigator.vibrate && navigator.vibrate(ms));
+        const dropAt = (x, y) => {
+            const el = document.elementFromPoint(x, y)?.closest('[data-party]');
+            return el && root.contains(el) && el.dataset.party !== drag.from ? el : null;
+        };
+        const setOver = el => {
+            if (el === drag.over) return;
+            drag.over?.classList.remove('drop-over');
+            drag.over = el;
+            if (el) { el.classList.add('drop-over'); buzz(8); }
+        };
+        // Near the screen edges the page scrolls, so every player can be reached.
+        const autoScroll = () => {
+            if (!drag?.ghost) return;
+            const edge = 90, y = drag.y, h = window.innerHeight;
+            const v = y < edge + 60 ? -(edge + 60 - y) / 5 : y > h - edge ? (y - (h - edge)) / 5 : 0;
+            if (v) { window.scrollBy(0, v); setOver(dropAt(drag.x, drag.y)); }
+            drag.raf = requestAnimationFrame(autoScroll);
+        };
+        const finish = () => {
+            if (!drag) return;
+            cancelAnimationFrame(drag.raf);
+            drag.ghost?.remove();
+            drag.over?.classList.remove('drop-over');
+            drag.source?.classList.remove('drag-source');
+            document.body.classList.remove('coin-dragging');
+            drag = null;
+        };
+
+        root.addEventListener('pointerdown', e => {
+            const coin = e.target.closest('[data-coin]');
+            if (!coin || e.button > 0 || drag) return;
+            if (e.pointerType === 'mouse') e.preventDefault(); // no text selection while dragging
+            drag = { coin, from: coin.dataset.coin, id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY };
+            safe(() => coin.setPointerCapture(e.pointerId));
+        });
+        root.addEventListener('pointermove', e => {
+            if (!drag || e.pointerId !== drag.id) return;
+            drag.x = e.clientX; drag.y = e.clientY;
+            if (!drag.ghost) {
+                if (Math.hypot(drag.x - drag.x0, drag.y - drag.y0) < 8) return;
+                drag.ghost = drag.coin.cloneNode(true);
+                drag.ghost.removeAttribute('data-coin');
+                drag.ghost.removeAttribute('data-testid');
+                drag.ghost.className = 'coin coin-ghost';
+                document.body.appendChild(drag.ghost);
+                drag.source = drag.coin.closest('[data-party]');
+                drag.source?.classList.add('drag-source');
+                document.body.classList.add('coin-dragging');
+                buzz(12);
+                drag.raf = requestAnimationFrame(autoScroll);
+            }
+            drag.ghost.style.transform = `translate(${drag.x}px, ${drag.y}px)`;
+            setOver(dropAt(drag.x, drag.y));
+        });
+        root.addEventListener('pointerup', e => {
+            if (!drag || e.pointerId !== drag.id) return;
+            if (drag.ghost) {
+                suppressClick = Date.now() + 600;
+                const to = dropAt(e.clientX, e.clientY);
+                if (to) target.invokeMethodAsync('OnCoinDrop', drag.from, to.dataset.party);
+            }
+            finish();
+        });
+        root.addEventListener('pointercancel', finish);
+        root.addEventListener('lostpointercapture', e => { if (drag && e.pointerId === drag.id && !drag.ghost) finish(); });
+        // The click that follows a drag must not also open the payment from the coin.
+        window.addEventListener('click', e => {
+            if (Date.now() < suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = 0; }
+        }, true);
+    }
+
     function setUpdate(reg) {
         updateReg = reg; updateReady = true;
         if (updateTarget) updateTarget.invokeMethodAsync('OnUpdateReady');
@@ -136,6 +214,7 @@
                 try { el.setSelectionRange(pos, pos); } catch { }
             });
         },
+        coinDrag,
         scanner: {
             start: (video, target) => scanner.start(video, target),
             stop: () => scanner.stop(),

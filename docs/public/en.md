@@ -27,6 +27,7 @@ Tap *Save as my edition* to keep your settings under a name such as "Grandma's b
 - Every player has a **title deed card** showing their balance.
 - **GO +200** – player passed GO.
 - **Pay** – money from this player. Choose who receives it (bank, Free Parking, another player).
+- **Coin** – drag a player's coin onto another player, the bank or Free Parking: who pays and who receives are already filled in, just type the amount. Tapping the coin works like **Pay**.
 - **Get** – money to this player (from the bank by default).
 - Enter amounts on the keypad, like at a card terminal. **000** adds three zeros, **×** clears the amount.
 - **⋯ → Declare bankruptcy** – the player's remaining money goes to the creditor and the player is out.

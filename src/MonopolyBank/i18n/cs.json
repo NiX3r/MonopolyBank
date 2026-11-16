@@ -92,6 +92,8 @@
   "bank.pay": "Platit",
   "bank.receive": "Dostat",
   "bank.collectPot": "Vybrat",
+  "bank.coin": "Platit od: {0}",
+  "bank.dragHint": "Přetáhni minci na toho, kdo peníze dostane.",
 
   "pay.title": "Platba",
   "pay.from": "Od",

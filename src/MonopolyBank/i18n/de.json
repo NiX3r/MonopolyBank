@@ -92,6 +92,8 @@
   "bank.pay": "Zahlen",
   "bank.receive": "Erhalten",
   "bank.collectPot": "Einsammeln",
+  "bank.coin": "Zahlung von {0}",
+  "bank.dragHint": "Zieh eine Münze auf den, der das Geld bekommt.",
 
   "pay.title": "Zahlung",
   "pay.from": "Von",

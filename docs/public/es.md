@@ -27,6 +27,7 @@ Con *Guardar como mi edición* guardas la configuración con un nombre como «La
 - Cada jugador tiene una **tarjeta de título de propiedad** con su saldo.
 - **SALIDA +200** – el jugador pasó por la SALIDA.
 - **Pagar** – dinero de este jugador. Elige quién lo recibe (banco, Parking gratuito, otro jugador).
+- **Moneda** – arrastra la moneda de un jugador hasta otro jugador, el banco o el Parking gratuito: quién paga y quién recibe ya están elegidos, solo escribe el importe. Tocar la moneda funciona como **Pagar**.
 - **Cobrar** – dinero para este jugador (del banco por defecto).
 - Introduce los importes con el teclado numérico, como en un datáfono. **000** añade tres ceros y **×** borra el importe.
 - **⋯ → Declarar bancarrota** – el dinero restante va al acreedor y el jugador queda fuera.

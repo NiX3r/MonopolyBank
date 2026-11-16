@@ -27,6 +27,7 @@ Mit *Als meine Version speichern* behältst du die Einstellungen unter einem Nam
 - Jeder Spieler hat eine **Besitzrechtkarte** mit seinem Kontostand.
 - **LOS +200** – Spieler ist über LOS gegangen.
 - **Zahlen** – Geld von diesem Spieler. Wähle den Empfänger (Bank, Frei Parken, anderer Spieler).
+- **Münze** – zieh die Münze eines Spielers auf einen anderen Spieler, die Bank oder Frei Parken: Zahler und Empfänger sind schon ausgewählt, du gibst nur den Betrag ein. Antippen der Münze wirkt wie **Zahlen**.
 - **Erhalten** – Geld an diesen Spieler (standardmäßig von der Bank).
 - Beträge gibst du über das Tastenfeld ein, wie am Kartenterminal. **000** hängt drei Nullen an, **×** löscht den Betrag.
 - **⋯ → Bankrott erklären** – das Restgeld geht an den Gläubiger, der Spieler scheidet aus.
