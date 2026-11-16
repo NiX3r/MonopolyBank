@@ -5,7 +5,7 @@ namespace MonopolyBank.Services;
 /// <summary>Turns game objects into localized, human-readable text.</summary>
 public static class Texts
 {
-    public static readonly string[] Tokens = ["🎩", "🚗", "🐕", "🚢", "👢", "🐈", "🦆", "🐧", "🦖", "🚂", "🎸", "⚓"];
+    public static readonly string[] Tokens = ["🎩", "🚗", "🐕", "🚢", "👢", "🐈", "🦆", "🐧", "🦖", "🚂", "🎸"];
     public static readonly string[] Colors = ["brown", "lightblue", "pink", "orange", "red", "yellow", "green", "darkblue"];
 
     public static string Error(this Loc l, BankException ex) => l["err." + ex.Error];

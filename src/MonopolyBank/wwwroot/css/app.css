@@ -356,11 +356,20 @@ input:focus { outline: 3px solid var(--focus); outline-offset: 1px; }
 }
 
 /* Token & color picker */
-.token-picker { display: flex; flex-direction: column; gap: 16px; }
-.token-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
-.token-opt { aspect-ratio: 1; font-size: 1.6rem; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
+.token-picker { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.token-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.token-opt { min-width: 0; padding: 0; aspect-ratio: 1; font-size: 1.6rem; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: #fff; cursor: pointer; }
 .token-opt.selected { background: var(--chest); box-shadow: var(--shadow-sm); transform: translate(-1px, -1px); }
-.color-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.token-more { display: grid; place-items: center; background: var(--cream); border-style: dashed; }
+.token-more.selected, .token-more.open { border-style: solid; }
+.emoji-browser { min-width: 0; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: #fff; overflow: hidden; }
+.emoji-tabs { display: flex; overflow-x: auto; border-bottom: 2px dashed rgb(0 0 0 / .2); scrollbar-width: none; }
+.emoji-tab { flex: 1 1 0; min-width: 30px; height: 42px; padding: 0; border: 0; border-bottom: 3px solid transparent; background: none; font-size: 1.25rem; cursor: pointer; opacity: .55; }
+.emoji-tab.selected { opacity: 1; border-bottom-color: var(--ink); background: var(--cream); }
+.emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); max-height: 264px; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 6px; }
+.emoji-opt { height: 44px; padding: 0; border: 0; border-radius: 8px; background: none; font-size: 1.6rem; line-height: 1; cursor: pointer; }
+.emoji-opt.selected { background: var(--chest); }
+.color-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 8px; }
 .swatch { aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 8px; background: var(--c); cursor: pointer; }
 .swatch.selected { box-shadow: 0 0 0 3px var(--paper), 0 0 0 5px var(--ink); }
 

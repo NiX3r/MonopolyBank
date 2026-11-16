@@ -16,6 +16,7 @@ public sealed class Browser(IJSRuntime js)
     public ValueTask<bool> Copy(string text) => js.InvokeAsync<bool>("mb.copy", text);
     public ValueTask CoinDrag<T>(Microsoft.AspNetCore.Components.ElementReference root, DotNetObjectReference<T> target) where T : class =>
         js.InvokeVoidAsync("mb.coinDrag", root, target);
+    public ValueTask<bool[]> EmojiSupport(string[] emoji) => js.InvokeAsync<bool[]>("mb.emojiSupport", (object)emoji);
     public ValueTask KeepAwake(bool on) => js.InvokeVoidAsync("mb.keepAwake", on);
     public ValueTask<string> InstallState() => js.InvokeAsync<string>("mb.pwa.installState");
     public ValueTask<bool> Install() => js.InvokeAsync<bool>("mb.pwa.install");

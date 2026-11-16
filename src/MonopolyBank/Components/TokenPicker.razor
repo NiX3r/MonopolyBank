@@ -1,11 +1,43 @@
-@* Pick a token (emoji) and a property color for a player. *@
+@* Pick a token (emoji) and a property color for a player. The last token button opens every emoji. *@
+@inject Browser Browser
 <div class="token-picker">
     <div class="token-grid" role="group" aria-label="@L["setup.token"]">
         @foreach (var t in Texts.Tokens)
         {
-            <button type="button" class="token-opt @(t == Token ? "selected" : "")" @onclick="() => TokenChanged.InvokeAsync(t)">@t</button>
+            <button type="button" class="token-opt @(t == Token ? "selected" : "")" @onclick="() => Pick(t)">@t</button>
         }
+        <button type="button" class="token-opt token-more @(IsCustom ? "selected" : "") @(_all ? "open" : "")" @onclick="ToggleAll"
+                aria-label="@L["emoji.more"]" title="@L["emoji.more"]" aria-expanded="@(_all ? "true" : "false")" data-testid="token-more">
+            @if (IsCustom)
+            {
+                @Token
+            }
+            else
+            {
+                <Icon Name="plus" Size="22" />
+            }
+        </button>
     </div>
+
+    @if (_all && _usable is { } groups)
+    {
+        <div class="emoji-browser" data-testid="emoji-browser">
+            <div class="emoji-tabs" role="tablist">
+                @foreach (var g in groups)
+                {
+                    <button type="button" role="tab" class="emoji-tab @(g.Key == _group ? "selected" : "")" aria-selected="@(g.Key == _group ? "true" : "false")"
+                            aria-label="@L["emoji." + g.Key]" title="@L["emoji." + g.Key]" @onclick="() => _group = g.Key">@g.Icon</button>
+                }
+            </div>
+            <div class="emoji-grid" role="tabpanel" aria-label="@L["emoji." + _group]">
+                @foreach (var e in (groups.FirstOrDefault(g => g.Key == _group) ?? groups[0]).Emoji)
+                {
+                    <button type="button" class="emoji-opt @(e == Token ? "selected" : "")" @onclick="() => Pick(e)">@e</button>
+                }
+            </div>
+        </div>
+    }
+
     <div class="color-grid" role="group" aria-label="@L["setup.color"]">
         @foreach (var c in Texts.Colors)
         {
@@ -20,4 +52,32 @@
     [Parameter] public EventCallback<string> TokenChanged { get; set; }
     [Parameter] public string Color { get; set; } = "";
     [Parameter] public EventCallback<string> ColorChanged { get; set; }
+
+    private bool _all;
+    private string _group = "smileys";
+
+    /// <summary>Emoji this device can draw (older phones/PCs show boxes for newer ones); checked once per session.</summary>
+    private static IReadOnlyList<EmojiList.Group>? _usable;
+
+    private async Task ToggleAll()
+    {
+        _all = !_all;
+        if (!_all || _usable is not null) return;
+        var all = EmojiList.Groups;
+        var ok = await Browser.EmojiSupport(all.SelectMany(g => g.Emoji).ToArray());
+        var i = 0;
+        _usable = all
+            .Select(g => g with { Emoji = g.Emoji.Where(_ => i < ok.Length ? ok[i++] : true).ToArray() })
+            .Where(g => g.Emoji.Length > 0)
+            .ToList();
+        if (_usable.Count == 0) _usable = all;
+    }
+
+    private bool IsCustom => Token.Length > 0 && !Texts.Tokens.Contains(Token);
+
+    private async Task Pick(string token)
+    {
+        _all = false;
+        await TokenChanged.InvokeAsync(token);
+    }
 }

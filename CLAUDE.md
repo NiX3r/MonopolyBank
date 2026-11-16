@@ -5,6 +5,7 @@ Offline PWA bank for the board game. Blazor WebAssembly standalone, .NET 10. No 
 ## Layout
 - `src/MonopolyBank.Core` – all money rules, pure C#. `SharedGame` (one device), `WalletGame` (one player per phone), `Codes.cs` (game/transfer codes v2 with scaled amounts, still reads v1; QR payloads), `Editions.cs` (presets + user editions), `SavedState` (JSON, source-gen).
 - `src/MonopolyBank` – UI. `Pages/` routes, `Components/` (all inherit `MbComponent` via `_Imports.razor`), `Services/` (`GameStore` = persistence, `Loc` = i18n, `Browser` = JS interop), `wwwroot/js/app.js` = `window.mb`.
+- `src/MonopolyBank/Data/emoji.txt` – full emoji list for the token picker (`tools/gen_emoji.py`); the device hides ones it can't draw (`mb.emojiSupport`).
 - `tests/MonopolyBank.Tests` – xUnit (core + i18n completeness). `tests/MonopolyBank.E2E` – Playwright/NUnit, publishes Release and serves it with Kestrel.
 
 ## Rules

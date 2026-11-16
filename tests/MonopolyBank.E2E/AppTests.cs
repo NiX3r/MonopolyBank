@@ -210,6 +210,25 @@ public class AppTests : PageTest
     }
 
     [Test]
+    public async Task TokenPicker_AnyEmojiFromTheFullList()
+    {
+        await OpenApp(Page, "new/wallet");
+        await Page.GetByTestId("your-name").FillAsync("Anna");
+        await Page.GetByTestId("token-more").ClickAsync();
+        var browser = Page.GetByTestId("emoji-browser");
+        await browser.GetByRole(AriaRole.Tab, new() { Name = "Food & drink" }).ClickAsync();
+        await browser.GetByRole(AriaRole.Button, new() { Name = "🍕", Exact = true }).ClickAsync();
+
+        // The picked emoji takes the last slot and the full list closes
+        await Expect(browser).ToHaveCountAsync(0);
+        await Expect(Page.GetByTestId("token-more")).ToHaveTextAsync("🍕");
+        await Expect(Page.GetByTestId("token-more")).ToHaveClassAsync(new Regex("selected"));
+
+        await Page.GetByTestId("create-wallet").ClickAsync();
+        await Expect(Page.Locator(".deed-token").First).ToHaveTextAsync("🍕");
+    }
+
+    [Test]
     public async Task MoneyPad_FastTaps_RegisterEveryDigit_WithoutDoubleTapZoom()
     {
         await OpenApp(Page, "new/shared");

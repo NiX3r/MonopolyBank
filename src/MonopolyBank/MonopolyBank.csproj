@@ -24,6 +24,8 @@
   <ItemGroup>
     <!-- Languages: drop a new i18n/xx.json file here and it is picked up automatically. -->
     <EmbeddedResource Include="i18n\*.json" LogicalName="i18n/%(Filename)%(Extension)" />
+    <!-- Token picker's full emoji list (Services/EmojiList.cs). -->
+    <EmbeddedResource Include="Data\emoji.txt" LogicalName="emoji.txt" />
   </ItemGroup>
 
   <ItemGroup>

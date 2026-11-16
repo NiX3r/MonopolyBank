@@ -215,6 +215,34 @@
             });
         },
         coinDrag,
+        // Which emoji this device can draw: colored glyph, or a mono glyph that isn't the "missing" box, and a single
+        // glyph wide (an unsupported ZWJ sequence falls apart into several). Flags and ZWJ sequences must be colored:
+        // without support they show as letters ("CZ") or a plain black flag.
+        emojiSupport: list => safe(() => {
+            const size = 40, c = document.createElement('canvas');
+            c.width = c.height = size;
+            const ctx = c.getContext('2d', { willReadFrequently: true });
+            ctx.font = '30px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+            ctx.textBaseline = 'top';
+            const draw = e => { ctx.clearRect(0, 0, size, size); ctx.fillStyle = '#000'; ctx.fillText(e, 2, 2); return ctx.getImageData(0, 0, size, size).data; };
+            const missing = draw('\u{10FFFD}');
+            const wide = (ctx.measureText('\u{1F600}').width || 30) * 1.4;
+            const needsColor = /[\u{1F1E6}-\u{1F1FF}\u{E0020}-\u{E007F}\u200D]/u;
+            return list.map(e => {
+                if (ctx.measureText(e).width > wide) return false;
+                const strict = needsColor.test(e);
+                const d = draw(e);
+                let same = true, ink = false;
+                for (let i = 0; i < d.length; i += 4) {
+                    if (d[i + 3] > 40) {
+                        ink = true;
+                        if (Math.abs(d[i] - d[i + 1]) > 24 || Math.abs(d[i + 1] - d[i + 2]) > 24) return true;
+                    }
+                    if (same && d[i + 3] !== missing[i + 3]) same = false;
+                }
+                return !strict && ink && !same;
+            });
+        }, list.map(() => true)),
         scanner: {
             start: (video, target) => scanner.start(video, target),
             stop: () => scanner.stop(),
